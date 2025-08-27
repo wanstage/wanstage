@@ -21,7 +21,16 @@ jobs:
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org/
+          always-auth: true
       - run: npm ci
-      - run: npm publish --access public
+      - name: Preflight
+        run: |
+          npm config get registry
+          npm whoami
+          npm ping
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
