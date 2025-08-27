@@ -12,5 +12,6 @@
     "test": "echo \"No tests\" && exit 0"
   },
   "keywords": [],
-  "author": ""
+  "author": "",
+  "private": "false"
 }
