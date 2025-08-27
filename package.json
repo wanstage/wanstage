@@ -1,0 +1,16 @@
+{
+  "name": "hello-ngrok",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "license": "ISC",
+  "dependencies": {
+    "@ngrok/ngrok": "^1.5.2"
+  },
+  "description": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": ""
+}
