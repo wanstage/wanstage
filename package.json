@@ -13,5 +13,8 @@
   },
   "keywords": [],
   "author": "",
-  "private": "false"
+  "private": "false",
+  "publishConfig": {
+    "access": "public"
+  }
 }
