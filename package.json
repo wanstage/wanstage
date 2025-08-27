@@ -1,5 +1,5 @@
 {
-  "name": "hello-ngrok",
+  "name": "@wanstage/hello-ngrok",
   "version": "1.0.3",
   "type": "module",
   "main": "index.js",
