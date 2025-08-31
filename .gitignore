@@ -6,3 +6,4 @@ coverage/
 # local only
 authinfo.*
 1.0.xx*
+.npmrc
