@@ -1,0 +1,43 @@
+name: Node.js Package
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+
+  publish-npm:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com/
+          scope: '@wanstage'
+      - name: Publish to GitHub Packages
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+git add .github/workflows/publish.yml package.json
+git commit -m "ci: scope registry only for publish step"
+git push
+gh workflow run "Node.js Package"
+RUN_ID=$(gh run list --workflow "Node.js Package" --limit 1 --json databaseId -q '.[0].databaseId')
+gh run watch "$RUN_ID" --exit-status
+JOB_ID=$(gh api repos/wanstage/wanstage/actions/runs/$RUN_ID/jobs --jq '.jobs[] | select(.name=="publish-npm") | .id')
+gh run view --job "$JOB_ID" --log
