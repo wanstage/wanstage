@@ -1,16 +1,12 @@
 {
   "version": "0.2.0",
   "configurations": [
-    
     {
-      "name": "WANSTAGE Run",
+      "name": "Python: Current File",
       "type": "python",
       "request": "launch",
-      "program": "/Users/okayoshiyuki/WANSTAGE/hello_env.py",
-      "cwd": "/Users/okayoshiyuki/WANSTAGE",
-      "python": "/Users/okayoshiyuki/WANSTAGE/venv/bin/python",
-      "console": "integratedTerminal",
-      "justMyCode": true
+      "program": "${file}",
+      "console": "integratedTerminal"
     }
   ]
 }
