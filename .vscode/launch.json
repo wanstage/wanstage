@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "WANSTAGE Run",
+      "type": "python",
+      "request": "launch",
+      "program": "/Users/okayoshiyuki/WANSTAGE/hello_env.py",
+      "cwd": "/Users/okayoshiyuki/WANSTAGE",
+      "python": "/Users/okayoshiyuki/WANSTAGE/venv/bin/python",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+ls -R ~/WANSTAGE/.vscode{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Agent: ZTOW監視1サイクル",
+      "type": "shell",
+      "command": "bash agent/agent_run.sh ztow_cycle",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    }
+  ]
+}

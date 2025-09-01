@@ -1,0 +1,13 @@
+{
+  "python.defaultInterpreterPath": "/Users/okayoshiyuki/WANSTAGE/venv/bin/python",
+  "python.terminal.activateEnvironment": true,
+  "python.analysis.autoImportCompletions": false,
+  "python.testing.pytestEnabled": false,
+  "python.testing.unittestEnabled": false,
+  "code-runner.runInTerminal": true,
+  "code-runner.clearPreviousOutput": true,
+  "code-runner.ignoreSelection": true,
+  "code-runner.executorMap": {
+    "python": "/Users/okayoshiyuki/WANSTAGE/venv/bin/python"
+  }
+}

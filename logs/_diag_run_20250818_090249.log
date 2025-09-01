@@ -1,0 +1,8 @@
++ set -euo pipefail
++ WF=ztow_cycle
++ case "$WF" in
++ '[' -f ztow/runner.py ']'
++ /usr/bin/env python3 ztow/runner.py
+[DUMMY] ZTOW runner: 監視1サイクル実行（ダミー）
++ echo '[Agent] done.'
+[Agent] done.
