@@ -9,8 +9,18 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
-    "@ngrok/ngrok": "^1.5.2"
+    "@ngrok/ngrok": "^1.5.2",
+    "dotenv": "^17.2.1",
+    "ngrok": "^5.0.0-beta.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.34.0",
+    "@types/node": "^24.3.0",
+    "eslint": "^9.34.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2"
   }
 }

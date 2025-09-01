@@ -1,0 +1,9 @@
+[MASTER]
+disable = C0114,C0115,C0116              ; docstring系は一旦無効化
+extension-pkg-whitelist =
+[TYPECHECK]
+generated-members = cv2.*,sphinx.*
+[FORMAT]
+max-line-length = 120
+[MESSAGES CONTROL]
+enable = W,E                             ; 警告とエラー中心

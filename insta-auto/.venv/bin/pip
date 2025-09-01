@@ -1,4 +1,4 @@
-#!/Users/okayoshiyuki/WANSTAGE/insta-auto/.venv/bin/python3
+#!/Users/okayoshiyuki/WANSTAGE/insta-auto/.venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

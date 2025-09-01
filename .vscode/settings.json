@@ -1,13 +1,25 @@
 {
+  // Python
   "python.defaultInterpreterPath": "/Users/okayoshiyuki/WANSTAGE/venv/bin/python",
   "python.terminal.activateEnvironment": true,
-  "python.analysis.autoImportCompletions": false,
-  "python.testing.pytestEnabled": false,
-  "python.testing.unittestEnabled": false,
-  "code-runner.runInTerminal": true,
-  "code-runner.clearPreviousOutput": true,
-  "code-runner.ignoreSelection": true,
-  "code-runner.executorMap": {
-    "python": "/Users/okayoshiyuki/WANSTAGE/venv/bin/python"
-  }
+  "python.analysis.typeCheckingMode": "basic",             // strict→basic で誤検知を減らす
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportMissingTypeStubs": "none",
+    "reportMissingImports": "warning"
+  },
+
+  // TypeScript/JavaScriptはESLintに一本化（VSCodeのデフォ検証は切る）
+  "javascript.validate.enable": false,
+  "typescript.validate.enable": false,
+  "typescript.tsdk": "node_modules/typescript/lib",
+
+  // ESLint
+  "eslint.enable": true,
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "eslint.workingDirectories": [{"mode": "auto"}],
+  "eslint.quiet": true,                                    // warningのみ表示（ノイズ低減）
+
+  // Problemsパネルを軽く
+  "problems.showCurrentInStatus": true,
+  "problems.sortOrder": "severity"                         // 重大順に並べる
 }

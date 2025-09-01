@@ -1,0 +1,6 @@
+venv/
+.venv/
+dist/
+build/
+node_modules/
+*.min.js
