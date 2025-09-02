@@ -1,17 +1,16 @@
 #!/usr/bin/env sh
-. "$(dirname "$0")/_/husky.sh"
 set -e
 
-# 1) 変更ファイルに対して lint & auto-fix
+# 1) 変更ファイルだけ lint & auto-fix
 npx lint-staged
 
-# 2) 変更に .ts/.tsx が含まれていたら TypeScript の型チェックを実行
+# 2) TS/TSX が含まれていれば型チェック
 if git diff --cached --name-only | grep -E '\.(ts|tsx)$' >/dev/null 2>&1; then
   echo "Running TypeScript typecheck..."
   npm run -s typecheck
 fi
 
-# 3) 変更に .py が含まれていたら（lint-stagedで既にfix済みだが）最終確認用に念のため
+# 3) Python が含まれていれば通知（整形は lint-staged で済）
 if git diff --cached --name-only | grep -E '\.py$' >/dev/null 2>&1; then
   echo "Python files were staged (Ruff/Black ran via lint-staged)."
 fi

@@ -33,16 +33,12 @@
     "typescript-eslint": "^8.41.0"
   },
   "lint-staged": {
-    "src/**/*.{ts,tsx,js}": [
-      "eslint --fix",
-      "prettier --write"
+    "**/*.{ts,tsx,js,cjs,mjs}": [
+      "eslint --fix"
     ],
     "*.py": [
       ".venv/bin/ruff check --fix",
       ".venv/bin/black"
-    ],
-    "**/*.{ts,tsx,js,cjs,mjs}": [
-      "eslint --fix"
     ]
   }
 }
