@@ -1,0 +1,11 @@
+import time
+
+
+def main():
+    for i in range(3):
+        print(f"Hello OpenTelemetry! Iter {i + 1}")
+        time.sleep(1)
+
+
+if __name__ == "__main__":
+    main()

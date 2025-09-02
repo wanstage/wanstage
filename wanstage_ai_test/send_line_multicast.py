@@ -1,4 +1,5 @@
 import os
+
 import requests
 from dotenv import load_dotenv
 
@@ -19,28 +20,15 @@ user_ids = [
     "HC5348TX4N",
     "FGAH6PZ8X3",
     "2JBXWSD5R2",
-    "6J4CNUPQHQ"
+    "6J4CNUPQHQ",
 ]
 
-headers = {
-    "Content-Type": "application/json",
-    "Authorization": f"Bearer {access_token}"
-}
+headers = {"Content-Type": "application/json", "Authorization": f"Bearer {access_token}"}
 
 # 各ユーザーにメッセージ送信
 for user_id in user_ids:
-    payload = {
-        "to": user_id,
-        "messages": [
-            {
-                "type": "text",
-                "text": message
-            }
-        ]
-    }
+    payload = {"to": user_id, "messages": [{"type": "text", "text": message}]}
     response = requests.post(
-        "https://api.line.me/v2/bot/message/push",
-        headers=headers,
-        json=payload
+        "https://api.line.me/v2/bot/message/push", headers=headers, json=payload
     )
     print(f"{user_id} → {response.status_code}: {response.text}")

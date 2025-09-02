@@ -2,11 +2,25 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Python: Current File",
-      "type": "python",
+      "name": "Python: Pyramid Application",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pyramid.scripts.pserve",
+      "args": [
+        "/development.ini"
+      ],
+      "pyramid": true,
+      "jinja": true
+    },
+  {
+    "name": "Python: Current File",
+      "type": "debugpy",
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal"
     }
   ]
+}
+{
+  "debug.javascript.autoAttach": "disabled"
 }

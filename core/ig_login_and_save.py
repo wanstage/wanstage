@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
-import os, getpass, json
+import getpass
+import json
+import os
 from pathlib import Path
+
 from instagrapi import Client
 
 ROOT = Path("~/WANSTAGE").expanduser()
@@ -8,12 +11,14 @@ SESS = ROOT / "creds" / "ig_session.json"
 SESS.parent.mkdir(parents=True, exist_ok=True)
 
 user = os.getenv("INSTAGRAM_USERNAME") or input("Instagram username: ")
-pwd  = os.getenv("INSTAGRAM_PASSWORD") or getpass.getpass("Instagram password: ")
+pwd = os.getenv("INSTAGRAM_PASSWORD") or getpass.getpass("Instagram password: ")
 
 cl = Client()
 
+
 def code_handler(username, choice):
     return input("2FA/Challenge code: ")
+
 
 cl.challenge_code_handler = code_handler
 

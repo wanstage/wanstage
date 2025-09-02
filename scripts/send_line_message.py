@@ -1,4 +1,5 @@
 import os
+
 import requests
 from dotenv import load_dotenv
 
@@ -14,21 +15,10 @@ greeting = os.getenv("GREETING", "こんにちは！")
 url = "https://api.line.me/v2/bot/message/push"
 
 # ヘッダー
-headers = {
-    "Content-Type": "application/json",
-    "Authorization": f"Bearer {channel_access_token}"
-}
+headers = {"Content-Type": "application/json", "Authorization": f"Bearer {channel_access_token}"}
 
 # メッセージ本文
-payload = {
-    "to": user_id,
-    "messages": [
-        {
-            "type": "text",
-            "text": greeting
-        }
-    ]
-}
+payload = {"to": user_id, "messages": [{"type": "text", "text": greeting}]}
 
 # 送信
 response = requests.post(url, headers=headers, json=payload)

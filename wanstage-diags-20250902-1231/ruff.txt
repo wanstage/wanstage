@@ -1,0 +1,55 @@
+B018 Found useless expression. Either assign it to a variable or remove it.
+ --> sample.py:1:1
+  |
+1 | [flake8]
+  | ^^^^^^^^
+2 | ignore = E302, E501[flake8]
+3 | ignore = E302
+  |
+
+F821 Undefined name `flake8`
+ --> sample.py:1:2
+  |
+1 | [flake8]
+  |  ^^^^^^
+2 | ignore = E302, E501[flake8]
+3 | ignore = E302
+  |
+
+F821 Undefined name `E302`
+ --> sample.py:2:10
+  |
+1 | [flake8]
+2 | ignore = E302, E501[flake8]
+  |          ^^^^
+3 | ignore = E302
+  |
+
+F821 Undefined name `E501`
+ --> sample.py:2:16
+  |
+1 | [flake8]
+2 | ignore = E302, E501[flake8]
+  |                ^^^^
+3 | ignore = E302
+  |
+
+F821 Undefined name `flake8`
+ --> sample.py:2:21
+  |
+1 | [flake8]
+2 | ignore = E302, E501[flake8]
+  |                     ^^^^^^
+3 | ignore = E302
+  |
+
+F821 Undefined name `E302`
+ --> sample.py:3:10
+  |
+1 | [flake8]
+2 | ignore = E302, E501[flake8]
+3 | ignore = E302
+  |          ^^^^
+  |
+
+Found 6 errors.

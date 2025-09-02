@@ -1,0 +1,12 @@
+
+Oops! Something went wrong! :(
+
+ESLint: 9.34.0
+
+A configuration object specifies rule "prettier/prettier", but could not find plugin "prettier".
+
+Common causes of this problem include:
+
+1. The "prettier" plugin is not defined in your configuration file.
+2. The "prettier" plugin is not defined within the same configuration object in which the "prettier/prettier" rule is applied.
+

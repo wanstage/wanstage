@@ -1,0 +1,4 @@
+[flake8]
+ignore = E302O[flake8]
+ignore = E302O
+

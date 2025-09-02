@@ -1,5 +1,6 @@
 import os
 import time
+
 import requests
 from dotenv import load_dotenv
 
@@ -8,6 +9,7 @@ load_dotenv()
 
 IG_USER_ID = os.getenv("IG_USER_ID")
 ACCESS_TOKEN = os.getenv("IG_ACCESS_TOKEN")
+
 
 def create_media(image_url, caption):
     """投稿用のメディアを作成する"""
@@ -21,6 +23,7 @@ def create_media(image_url, caption):
     r.raise_for_status()
     return r.json()["id"]
 
+
 def publish_media(creation_id):
     """作成したメディアを公開する"""
     url = f"https://graph.facebook.com/v21.0/{IG_USER_ID}/media_publish"
@@ -31,6 +34,7 @@ def publish_media(creation_id):
     r = requests.post(url, params=params)
     r.raise_for_status()
     return r.json()["id"]
+
 
 if __name__ == "__main__":
     # サンプル：プレースホルダー画像を投稿

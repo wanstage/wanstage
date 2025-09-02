@@ -1,25 +1,7 @@
 {
-  // Python
-  "python.defaultInterpreterPath": "/Users/okayoshiyuki/WANSTAGE/venv/bin/python",
-  "python.terminal.activateEnvironment": true,
-  "python.analysis.typeCheckingMode": "basic",             // strict→basic で誤検知を減らす
-  "python.analysis.diagnosticSeverityOverrides": {
-    "reportMissingTypeStubs": "none",
-    "reportMissingImports": "warning"
-  },
-
-  // TypeScript/JavaScriptはESLintに一本化（VSCodeのデフォ検証は切る）
-  "javascript.validate.enable": false,
-  "typescript.validate.enable": false,
-  "typescript.tsdk": "node_modules/typescript/lib",
-
-  // ESLint
-  "eslint.enable": true,
-  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
-  "eslint.workingDirectories": [{"mode": "auto"}],
-  "eslint.quiet": true,                                    // warningのみ表示（ノイズ低減）
-
-  // Problemsパネルを軽く
-  "problems.showCurrentInStatus": true,
-  "problems.sortOrder": "severity"                         // 重大順に並べる
+  "eslint.useFlatConfig": true,
+  "eslint.validate": ["javascript", "typescript", "typescriptreact"],
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "typescript.tsdk": "node_modules/typescript/lib"
 }

@@ -1,0 +1,2 @@
+tsconfig.json(4,15): error TS5110: Option 'module' must be set to 'NodeNext' when option 'moduleResolution' is set to 'NodeNext'.
+tsconfig.json(12,27): error TS5103: Invalid value for '--ignoreDeprecations'.
