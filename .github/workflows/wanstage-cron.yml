@@ -1,0 +1,13 @@
+name: wanstage-cron
+on:
+  schedule:
+    - cron: '0 0 * * *'  # UTC 00:00 = JST 09:00
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci
+      - run: node scripts/notify.js
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
