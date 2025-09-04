@@ -1,0 +1,16 @@
+name: auto-post
+on:
+  schedule:
+    - cron: '0 0 * * *' # 00:00 UTC = 09:00 JST
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: node --no-warnings --experimental-strip-types ./src/post.ts "定期投稿 $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
