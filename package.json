@@ -23,13 +23,20 @@
     "check:py:ruff": "python -m ruff check .",
     "check:py:black": "python -m black --check .",
     "check:html": "html-validate 'public/**/*.html' 'src/**/*.html' || echo 'No HTML files found; skipped'",
-    "check:all": "npm run check:ts && npm run check:js && npm run check:py:ruff && npm run check:py:black && npm run check:html"
+    "check:all": "npm run check:ts && npm run check:js && npm run check:py:ruff && npm run check:py:black && npm run check:html",
+    "post": "node --env-file=.env --experimental-strip-types ./src/post.ts",
+    "post:x": "npm run post -- --to=x",
+    "post:ig": "npm run post -- --to=instagram",
+    "setup:keys": "node --experimental-strip-types ./scripts/key-wizard.ts",
+    "check:py": "python -m ruff check . && python -m black --check .",
+    "fix:py": "python -m ruff check . --fix && python -m black ."
   },
   "devDependencies": {
     "@eslint/js": "^8.56.0",
     "@types/node": "^24.3.1",
     "@typescript-eslint/eslint-plugin": "^8.42.0",
     "@typescript-eslint/parser": "^8.42.0",
+    "dotenv": "^17.2.2",
     "eslint": "^9.34.0",
     "eslint-config-prettier": "^9.1.2",
     "eslint-plugin-prettier": "^5.5.4",
@@ -50,6 +57,12 @@
     ],
     "*.{json,md,yml,yaml}": [
       "prettier -w"
+    ],
+    "*.html": [
+      "html-validate"
     ]
+  },
+  "dependencies": {
+    "twitter-api-v2": "^1.25.0"
   }
 }

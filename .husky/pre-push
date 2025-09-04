@@ -1,31 +1,16 @@
 #!/usr/bin/env sh
-set -e
+set -euo pipefail
 
 echo "[pre-push] TypeScript typecheck"
-npm run -s typecheck
+npm run -s check:ts
 
-echo "[pre-push] Build"
-npm run -s build
+echo "[pre-push] ESLint"
+npm run -s check:js
 
-echo "[pre-push] Tests"
-# test:ci があれば優先、無ければ test、無ければスキップ
-if npm run -s test:ci >/dev/null 2>&1; then
-  npm run -s test:ci
-elif npm run -s test >/dev/null 2>&1; then
-  npm run -s test
-else
-  echo "(no tests) — skipping"
-fi
+echo "[pre-push] HTML validate"
+npm run -s check:html
 
-# Python（任意）：ruff / black があればチェック（無ければ自動スキップ）
-if [ -x ".venv/bin/ruff" ]; then
-  echo "[pre-push] Ruff check"
-  .venv/bin/ruff check .
-fi
-
-if [ -x ".venv/bin/black" ]; then
-  echo "[pre-push] Black check"
-  .venv/bin/black --check .
-fi
+echo "[pre-push] Python (ruff/black)"
+npm run -s check:py
 
 echo "[pre-push] OK"
