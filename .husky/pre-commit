@@ -1,16 +1,4 @@
 #!/usr/bin/env sh
-set -e
-
-# 1) 変更ファイルだけ lint & auto-fix
-npx lint-staged
-
-# 2) TS/TSX が含まれていれば型チェック
-if git diff --cached --name-only | grep -E '\.(ts|tsx)$' >/dev/null 2>&1; then
-  echo "Running TypeScript typecheck..."
-  npm run -s typecheck
-fi
-
-# 3) Python が含まれていれば通知（整形は lint-staged で済）
-if git diff --cached --name-only | grep -E '\.py$' >/dev/null 2>&1; then
-  echo "Python files were staged (Ruff/Black ran via lint-staged)."
-fi
+set -euo pipefail
+# ステージされたファイルだけを対象に自動修正
+npx --no-install lint-staged
