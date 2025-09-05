@@ -1,0 +1,118 @@
+name: social-auto-post-split
+
+on:
+  schedule:
+    # 平日 09:00 JST（UTC 00:00）
+    - cron: '0 0 * * 1-5'
+    # 平日 18:00 JST（UTC 09:00）
+    - cron: '0 9 * * 1-5'
+    # 週末 10:00 JST（UTC 01:00）
+    - cron: '0 1 * * 6,0'
+  workflow_dispatch:
+    inputs:
+      to:
+        description: '投稿先（空ならデフォルトの行先マトリクスを使用）'
+        required: false
+        default: ''
+        type: choice
+        options: ['', bluesky, mastodon]
+      message:
+        description: '投稿本文（空なら既定文を自動生成）'
+        required: false
+        default: ''
+      image:
+        description: '画像URL（Zapier側がURL受取対応の場合）'
+        required: false
+        default: ''
+      dateprefix:
+        description: '文頭に日付（JST）を付与'
+        required: false
+        default: true
+        type: boolean
+      hashtags:
+        description: 'カンマ区切り: wanstage,test のように'
+        required: false
+        default: ''
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        to: [bluesky, mastodon]
+    # 手動: to未指定なら両方。指定時は一致のみ実行
+    if: ${{ github.event.inputs.to == '' || github.event.inputs.to == matrix.to }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - run: npm ci
+
+      - name: Derive slot label
+        id: slot
+        shell: bash
+        run: |
+          # UTC時刻で分岐して「どのスロットか」を判定（ログ/メッセージ装飾用）
+          H=$(date -u +'%H')
+          DOW=$(date -u +'%u') # 1..7 (Mon..Sun)
+          # JST 09:00 = UTC 00:00、JST 18:00 = UTC 09:00、JST 土日10:00 = UTC 01:00
+          if [[ "$DOW" -ge 1 && "$DOW" -le 5 && "$H" == "00" ]]; then
+            echo "slot=wk-0900" >> $GITHUB_OUTPUT
+          elif [[ "$DOW" -ge 1 && "$DOW" -le 5 && "$H" == "09" ]]; then
+            echo "slot=wk-1800" >> $GITHUB_OUTPUT
+          elif [[ "$DOW" -eq 6 || "$DOW" -eq 7 ]] && [[ "$H" == "01" ]]; then
+            echo "slot=we-1000" >> $GITHUB_OUTPUT
+          else
+            echo "slot=manual" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post via Zapier relay
+        env:
+          ZAPIER_HOOK_URL: ${{ secrets.ZAPIER_HOOK_URL }}
+          DEFAULT_HASHTAGS: ${{ vars.DEFAULT_HASHTAGS }}
+          PROMO_URL: ${{ vars.PROMO_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # 1) メッセージ生成（入力が空なら枠を自動組立）
+          MSG="${{ github.event.inputs.message }}"
+          if [ -z "${MSG}" ]; then
+            SLOT="${{ steps.slot.outputs.slot }}"
+            CASE="$SLOT"
+            case "$CASE" in
+              wk-0900)  PREFIX="【朝の更新】";;
+              wk-1800)  PREFIX="【夕方の更新】";;
+              we-1000)  PREFIX="【週末の更新】";;
+              *)        PREFIX="";;
+            esac
+            MSG="${PREFIX} 定期投稿 $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          fi
+
+          # 2) 付与要素（prefix / ハッシュタグ / 画像）
+          ARGS="--to=${{ matrix.to }}"
+          if [ "${{ github.event.inputs.dateprefix }}" = "true" ]; then
+            ARGS="$ARGS --dateprefix"
+          fi
+
+          # 収益導線: プロモURL（あれば本文末尾に付与）
+          if [ -n "${PROMO_URL:-}" ]; then
+            MSG="$MSG ${PROMO_URL}"
+          fi
+
+          if [ -n "${{ github.event.inputs.hashtags }}" ]; then
+            ARGS="$ARGS --hashtags=${{ github.event.inputs.hashtags }}"
+          elif [ -n "${DEFAULT_HASHTAGS:-}" ]; then
+            ARGS="$ARGS --hashtags=${DEFAULT_HASHTAGS}"
+          fi
+
+          if [ -n "${{ github.event.inputs.image }}" ]; then
+            ARGS="$ARGS --image=${{ github.event.inputs.image }}"
+          fi
+
+          echo "node --no-warnings --experimental-strip-types ./src/post.ts $ARGS \"$MSG\""
+          node --no-warnings --experimental-strip-types ./src/post.ts $ARGS "$MSG"
