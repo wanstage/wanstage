@@ -1,97 +1,88 @@
-import 'dotenv/config';
-import { postToSlack } from './providers/slack.ts';
-import { postToX } from './providers/x.ts';
-import { postToInstagram } from './providers/instagram.ts';
-import { postToMastodon } from './providers/mastodon.ts';
-import { postViaZapier } from './providers/zapier.ts';
 import { readFile } from 'node:fs/promises';
+import { basename, extname } from 'node:path';
+import { postToSlack } from './providers/slack.ts';
+import { postViaZapier, ZapierImage } from './providers/zapier.ts';
+
+function pickArg(flag: string): string | undefined {
+  const m = process.argv.find((a) => a.startsWith(`--${flag}=`));
+  return m ? m.replace(`--${flag}=`, '') : undefined;
+}
+function hasFlag(flag: string): boolean {
+  return process.argv.includes(`--${flag}`);
+}
+function mimeFromExt(p: string): string {
+  const e = extname(p).toLowerCase();
+  if (e === '.jpg' || e === '.jpeg') return 'image/jpeg';
+  if (e === '.png') return 'image/png';
+  if (e === '.gif') return 'image/gif';
+  if (e === '.webp') return 'image/webp';
+  return 'application/octet-stream';
+}
+
+async function buildZapierImage(
+  imagePath?: string
+): Promise<ZapierImage | undefined> {
+  if (!imagePath) return undefined;
+  const buf = await readFile(imagePath);
+  const mime = mimeFromExt(imagePath);
+  const b64 = Buffer.from(buf).toString('base64');
+  return {
+    filename: basename(imagePath),
+    data: `data:${mime};base64,${b64}`,
+  };
+}
+
+function decorateMessage(raw: string): string {
+  const parts: string[] = [];
+  if (hasFlag('dateprefix')) {
+    const stamp = new Date()
+      .toLocaleString('ja-JP', { timeZone: process.env.TZ || 'Asia/Tokyo' })
+      .replace(/\//g, '/');
+    parts.push(`[${stamp}]`);
+  }
+  parts.push(raw);
+
+  const hs = pickArg('hashtags') ?? process.env.DEFAULT_HASHTAGS ?? '';
+  const tags = hs
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (tags.length)
+    parts.push(tags.map((t) => (t.startsWith('#') ? t : `#${t}`)).join(' '));
+
+  return parts.join(' ');
+}
 
 function pickTarget(): 'slack' | 'x' | 'instagram' | 'bluesky' | 'mastodon' {
-  const toArg = process.argv.find((a) => a.startsWith('--to=')) || '';
-  const to = toArg.replace('--to=', '').toLowerCase();
+  const to = (pickArg('to') ?? 'slack').toLowerCase();
   if (['slack', 'x', 'instagram', 'bluesky', 'mastodon'].includes(to))
     return to as any;
   return 'slack';
 }
-function addDatePrefix(s: string) {
-  return `[${new Date().toLocaleString('ja-JP', { timeZone: process.env.TZ || 'Asia/Tokyo' })}] ${s}`;
-}
-function addHashtags(s: string, tags?: string) {
-  if (!tags) return s;
-  const list = tags
-    .split(',')
-    .map((t) => t.trim())
-    .filter(Boolean);
-  if (!list.length) return s;
-  const line = list.map((t) => (t.startsWith('#') ? t : `#${t}`)).join(' ');
-  return `${s} ${line}`.trim();
-}
-async function maybeBuildImagePayload(imagePath?: string) {
-  if (!imagePath) return undefined;
-  const bytes = new Uint8Array(await readFile(imagePath));
-  return { path: imagePath, bytes, mimeType: undefined as string | undefined };
-}
 
 async function main() {
-  const args = process.argv.slice(2).filter((a) => !a.startsWith('--to='));
-  const opts = Object.fromEntries(
-    process.argv
-      .slice(2)
-      .filter((a) => a.startsWith('--'))
-      .map((a) => {
-        const [k, v = ''] = a.replace(/^--/, '').split('=');
-        return [k, v];
-      })
-  ) as Record<string, string>;
-
   const target = pickTarget();
-  const msgRaw =
-    args.filter((a) => !a.startsWith('--')).join(' ') ||
-    `定期投稿 ${new Date().toISOString()}`;
-  const withDate = 'dateprefix' in opts ? addDatePrefix(msgRaw) : msgRaw;
-  const finalMsg = addHashtags(
-    withDate,
-    opts.hashtags || process.env.DEFAULT_HASHTAGS
-  );
+  const imagePath = pickArg('image');
+  const msgArg = process.argv
+    .filter((a) => !a.startsWith('--'))
+    .slice(2)
+    .join(' ');
+  const message = msgArg || `定期投稿 ${new Date().toISOString()}`;
+  const finalMsg = decorateMessage(message);
+  const zapierImage = await buildZapierImage(imagePath);
 
-  const imagePayload = await maybeBuildImagePayload(opts.image);
-
-  // 直投（秘密が揃っていれば）：X / IG / Mastodon
-  if (target === 'x' && process.env.X_APP_KEY) {
-    await postToX(finalMsg);
-    console.log(`Posted(x):`, finalMsg);
-    return;
-  }
-  if (target === 'instagram' && process.env.IG_USER_ID) {
-    await postToInstagram(finalMsg);
-    console.log(`Posted(ig):`, finalMsg);
-    return;
-  }
-  if (
-    target === 'mastodon' &&
-    process.env.MASTO_BASE_URL &&
-    process.env.MASTO_TOKEN
-  ) {
-    await postToMastodon(finalMsg, { image: imagePayload });
-    console.log(`Posted(mastodon):`, finalMsg);
-    return;
-  }
-
-  // Slack はローカル直投（従来どおり）
+  // Slack はローカル直投
   if (target === 'slack') {
     await postToSlack(finalMsg);
     console.log(`Posted(slack):`, finalMsg);
     return;
   }
 
-  // その他/鍵不足 → Zapier 経由で中継
-  if (!process.env.ZAPIER_HOOK_URL)
-    throw new Error(
-      `${target.toUpperCase()} secrets are missing and ZAPIER_HOOK_URL not set`
-    );
-  await postViaZapier(target as any, finalMsg, imagePayload);
+  // それ以外は Zapier 経由（鍵が無くても動く）
+  await postViaZapier(target, finalMsg, zapierImage);
   console.log(`Posted(zapier→${target}):`, finalMsg);
 }
+
 main().catch((e) => {
   console.error(e);
   process.exit(1);
