@@ -1,8 +1,8 @@
 name: social-auto-post-split
 
 on:
+  # 平日 09:00 JST（UTC 00:00）
   schedule:
-    # 平日 09:00 JST（UTC 00:00）
     - cron: '0 0 * * 1-5'
     # 平日 18:00 JST（UTC 09:00）
     - cron: '0 9 * * 1-5'
@@ -11,13 +11,13 @@ on:
   workflow_dispatch:
     inputs:
       to:
-        description: '投稿先（空ならデフォルトの行先マトリクスを使用）'
+        description: '投稿先（空ならマトリクス全実行）'
         required: false
         default: ''
         type: choice
         options: ['', bluesky, mastodon]
       message:
-        description: '投稿本文（空なら既定文を自動生成）'
+        description: '投稿本文（空なら自動テンプレ）'
         required: false
         default: ''
       image:
@@ -34,13 +34,18 @@ on:
         required: false
         default: ''
 
+env:
+  TEMPLATE_MORNING: '☀️ おはようございます！今日のWANSTAGEは…'
+  TEMPLATE_EVENING: '🌙 夕方チェックイン！進捗まとめ:'
+  TEMPLATE_WEEKEND: '🎉 週末スペシャル！おすすめは…'
+
 jobs:
   post:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         to: [bluesky, mastodon]
-    # 手動: to未指定なら両方。指定時は一致のみ実行
+    # 手動時: to未指定なら両方 / 指定時は一致のみ
     if: ${{ github.event.inputs.to == '' || github.event.inputs.to == matrix.to }}
 
     steps:
@@ -56,7 +61,6 @@ jobs:
         id: slot
         shell: bash
         run: |
-          # UTC時刻で分岐して「どのスロットか」を判定（ログ/メッセージ装飾用）
           H=$(date -u +'%H')
           DOW=$(date -u +'%u') # 1..7 (Mon..Sun)
           # JST 09:00 = UTC 00:00、JST 18:00 = UTC 09:00、JST 土日10:00 = UTC 01:00
@@ -79,18 +83,25 @@ jobs:
         run: |
           set -euo pipefail
 
-          # 1) メッセージ生成（入力が空なら枠を自動組立）
+          # 1) メッセージ生成（入力が空なら時間帯テンプレを選択）
           MSG="${{ github.event.inputs.message }}"
-          if [ -z "${MSG}" ]; then
-            SLOT="${{ steps.slot.outputs.slot }}"
-            CASE="$SLOT"
-            case "$CASE" in
-              wk-0900)  PREFIX="【朝の更新】";;
-              wk-1800)  PREFIX="【夕方の更新】";;
-              we-1000)  PREFIX="【週末の更新】";;
-              *)        PREFIX="";;
+          if [ -z "$MSG" ]; then
+            HOUR=$(date -u +"%H")
+            DOW=$(date -u +"%u")
+            if [ "$DOW" -ge 6 ]; then MSG="$TEMPLATE_WEEKEND";
+            elif [ "$HOUR" -lt 9 ]; then MSG="$TEMPLATE_MORNING";
+            else MSG="$TEMPLATE_EVENING"; fi
+          fi
+
+          # スロットに応じて見出し
+          if [ -z "${{ github.event.inputs.message }}" ]; then
+            case "${{ steps.slot.outputs.slot }}" in
+              wk-0900) PREFIX="【朝の更新】" ;;
+              wk-1800) PREFIX="【夕方の更新】" ;;
+              we-1000) PREFIX="【週末の更新】" ;;
+              *)       PREFIX="" ;;
             esac
-            MSG="${PREFIX} 定期投稿 $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            MSG="${PREFIX} ${MSG}"
           fi
 
           # 2) 付与要素（prefix / ハッシュタグ / 画像）
@@ -99,7 +110,7 @@ jobs:
             ARGS="$ARGS --dateprefix"
           fi
 
-          # 収益導線: プロモURL（あれば本文末尾に付与）
+          # 収益導線: プロモURL（あれば末尾付与）
           if [ -n "${PROMO_URL:-}" ]; then
             MSG="$MSG ${PROMO_URL}"
           fi
