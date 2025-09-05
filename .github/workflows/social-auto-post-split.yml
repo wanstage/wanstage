@@ -1,8 +1,8 @@
 name: social-auto-post-split
 
 on:
-  # 平日 09:00 JST（UTC 00:00）
   schedule:
+    # 平日 09:00 JST（UTC 00:00）
     - cron: '0 0 * * 1-5'
     # 平日 18:00 JST（UTC 09:00）
     - cron: '0 9 * * 1-5'
@@ -11,17 +11,17 @@ on:
   workflow_dispatch:
     inputs:
       to:
-        description: '投稿先（空ならマトリクス全実行）'
+        description: '投稿先（空ならマトリクスすべて）'
         required: false
         default: ''
         type: choice
         options: ['', bluesky, mastodon]
       message:
-        description: '投稿本文（空なら自動テンプレ）'
+        description: '投稿本文（空ならテンプレ自動）'
         required: false
         default: ''
       image:
-        description: '画像URL（Zapier側がURL受取対応の場合）'
+        description: '画像URL（ZapierがURL受取対応時）'
         required: false
         default: ''
       dateprefix:
@@ -33,11 +33,15 @@ on:
         description: 'カンマ区切り: wanstage,test のように'
         required: false
         default: ''
+      video_name:
+        description: '動画名 (Google Sheets 用)'
+        required: false
+        default: ''
 
 env:
-  TEMPLATE_MORNING: '☀️ 朝イチ速報！WANSTAGEが今日も動き出す🚀 #おはよう #WANSTAGE'
-  TEMPLATE_EVENING: '🌙 1日の締めくくり✨ WANSTAGE最新アップデートをチェック👀 #夜活 #WANSTAGE'
-  TEMPLATE_WEEKEND: '🎉 週末限定キャンペーン＆裏話公開中🔥 WANSTAGEで盛り上がろう！ #週末限定 #WANSTAGE'
+  TEMPLATE_MORNING: '☀️ おはようございます！今日のWANSTAGEは…'
+  TEMPLATE_EVENING: '🌙 夕方チェックイン！進捗まとめ:'
+  TEMPLATE_WEEKEND: '🎉 週末スペシャル！おすすめは…'
 
 jobs:
   post:
@@ -45,7 +49,7 @@ jobs:
     strategy:
       matrix:
         to: [bluesky, mastodon]
-    # 手動時: to未指定なら両方 / 指定時は一致のみ
+    # 手動: to未指定なら両方。指定時は一致のみ実行
     if: ${{ github.event.inputs.to == '' || github.event.inputs.to == matrix.to }}
 
     steps:
@@ -61,6 +65,7 @@ jobs:
         id: slot
         shell: bash
         run: |
+          # UTC時刻で分岐して「どのスロットか」を判定（ログ/メッセージ装飾用）
           H=$(date -u +'%H')
           DOW=$(date -u +'%u') # 1..7 (Mon..Sun)
           # JST 09:00 = UTC 00:00、JST 18:00 = UTC 09:00、JST 土日10:00 = UTC 01:00
@@ -83,35 +88,30 @@ jobs:
         run: |
           set -euo pipefail
 
-          # 1) メッセージ生成（入力が空なら時間帯テンプレを選択）
+          # 1) メッセージ生成（入力が空ならテンプレ）
           MSG="${{ github.event.inputs.message }}"
+          HOUR=$(date -u +"%H")
+          DOW=$(date -u +"%u")
           if [ -z "$MSG" ]; then
-            HOUR=$(date -u +"%H")
-            DOW=$(date -u +"%u")
             if [ "$DOW" -ge 6 ]; then MSG="$TEMPLATE_WEEKEND";
             elif [ "$HOUR" -lt 9 ]; then MSG="$TEMPLATE_MORNING";
             else MSG="$TEMPLATE_EVENING"; fi
           fi
 
-          # スロットに応じて見出し
+          # スロット表示つきの既定文（message未指定のときのみ）
           if [ -z "${{ github.event.inputs.message }}" ]; then
-            case "${{ steps.slot.outputs.slot }}" in
-              wk-0900) PREFIX="【朝の更新】" ;;
-              wk-1800) PREFIX="【夕方の更新】" ;;
-              we-1000) PREFIX="【週末の更新】" ;;
-              *)       PREFIX="" ;;
+            SLOT="${{ steps.slot.outputs.slot }}"
+            case "$SLOT" in
+              wk-0900)  PREFIX="【朝の更新】";;
+              wk-1800)  PREFIX="【夕方の更新】";;
+              we-1000)  PREFIX="【週末の更新】";;
+              *)        PREFIX="";;
             esac
-            MSG="${PREFIX} ${MSG}"
+            MSG="${PREFIX} 定期投稿 $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           fi
 
-          # 2) 付与要素（prefix / ハッシュタグ / 画像）
+          # 2) オプション組み立て
           ARGS="--to=${{ matrix.to }}"
-          if [ -n "${{ github.event.inputs.video_name }}" ]; then
-            ARGS="$ARGS --video-name=${{ github.event.inputs.video_name }}";
-          fi
-          if [ -n "${{ github.event.inputs.video_name }}" ]; then
-            ARGS="$ARGS --video-name=${{ github.event.inputs.video_name }}";
-          fi
           if [ "${{ github.event.inputs.dateprefix }}" = "true" ]; then
             ARGS="$ARGS --dateprefix"
           fi
@@ -129,6 +129,11 @@ jobs:
 
           if [ -n "${{ github.event.inputs.image }}" ]; then
             ARGS="$ARGS --image=${{ github.event.inputs.image }}"
+          fi
+
+          # ✅ これが今回追加分：video_name を post.ts へ
+          if [ -n "${{ github.event.inputs.video_name }}" ]; then
+            ARGS="$ARGS --video-name=${{ github.event.inputs.video_name }}"
           fi
 
           echo "node --no-warnings --experimental-strip-types ./src/post.ts $ARGS \"$MSG\""
