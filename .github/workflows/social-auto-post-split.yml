@@ -106,6 +106,12 @@ jobs:
 
           # 2) 付与要素（prefix / ハッシュタグ / 画像）
           ARGS="--to=${{ matrix.to }}"
+          if [ -n "${{ github.event.inputs.video_name }}" ]; then
+            ARGS="$ARGS --video-name=${{ github.event.inputs.video_name }}";
+          fi
+          if [ -n "${{ github.event.inputs.video_name }}" ]; then
+            ARGS="$ARGS --video-name=${{ github.event.inputs.video_name }}";
+          fi
           if [ "${{ github.event.inputs.dateprefix }}" = "true" ]; then
             ARGS="$ARGS --dateprefix"
           fi
