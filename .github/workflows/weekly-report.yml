@@ -1,0 +1,19 @@
+name: weekly-report
+on:
+  schedule:
+    - cron: '0 0 * * 1' # 毎週月曜 00:00 UTC（JST 09:00）
+  workflow_dispatch: {}
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - run: npm ci
+      - name: Weekly sheets summary -> Slack
+        env:
+          GCP_SA_JSON: ${{ secrets.GCP_SA_JSON }}
+          SHEET_ID: ${{ secrets.SHEET_ID }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: node --experimental-strip-types ./scripts/weekly-report.ts
