@@ -35,9 +35,9 @@ on:
         default: ''
 
 env:
-  TEMPLATE_MORNING: '☀️ おはようございます！今日も WANSTAGE と一緒にスタート🚀'
-  TEMPLATE_EVENING: '🌙 今日の進捗まとめ💡 WANSTAGE からのお知らせ:'
-  TEMPLATE_WEEKEND: '🎉 週末限定コンテンツ✨ WANSTAGE のおすすめはこちら👇'
+  TEMPLATE_MORNING: '☀️ 朝イチ速報！WANSTAGEが今日も動き出す🚀 #おはよう #WANSTAGE'
+  TEMPLATE_EVENING: '🌙 1日の締めくくり✨ WANSTAGE最新アップデートをチェック👀 #夜活 #WANSTAGE'
+  TEMPLATE_WEEKEND: '🎉 週末限定キャンペーン＆裏話公開中🔥 WANSTAGEで盛り上がろう！ #週末限定 #WANSTAGE'
 
 jobs:
   post:
