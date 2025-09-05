@@ -1,0 +1,83 @@
+name: social-auto-post
+
+on:
+  # JST 9:00（UTC 00:00）に自動投稿
+  schedule:
+    - cron: '0 0 * * *'
+  # 手動実行用（宛先や本文・画像を指定可能）
+  workflow_dispatch:
+    inputs:
+      to:
+        description: '投稿先（空ならデフォルトの行先マトリクスを使用）'
+        required: false
+        default: ''
+        type: choice
+        options: ['', bluesky, mastodon]
+      message:
+        description: '投稿本文（空ならUTC時刻入りの既定文）'
+        required: false
+        default: ''
+      image:
+        description: '画像URL（Zapier側でURL受け取り→画像投稿対応時）'
+        required: false
+        default: ''
+      dateprefix:
+        description: '文頭に日付（JST）を付与'
+        required: false
+        default: false
+        type: boolean
+      hashtags:
+        description: 'カンマ区切りのハッシュタグ（例: wanstage,test）'
+        required: false
+        default: ''
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    # 手動時に to が空 ⇒ マトリクス（bluesky, mastodon）を全て実行
+    # 手動時に to が指定 ⇒ 一致するターゲットのみ実行
+    strategy:
+      matrix:
+        to: [bluesky, mastodon]
+    if: ${{ github.event.inputs.to == '' || github.event.inputs.to == matrix.to }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - run: npm ci
+
+      # メッセージとフラグを組み立てて post.ts を実行
+      - name: Post via Zapier relay
+        env:
+          ZAPIER_HOOK_URL: ${{ secrets.ZAPIER_HOOK_URL }}
+          DEFAULT_HASHTAGS: ${{ vars.DEFAULT_HASHTAGS }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          MSG="${{ github.event.inputs.message }}"
+          if [ -z "${MSG}" ]; then
+            MSG="定期投稿 $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          fi
+
+          ARGS="--to=${{ matrix.to }}"
+
+          if [ "${{ github.event.inputs.dateprefix }}" = "true" ]; then
+            ARGS="$ARGS --dateprefix"
+          fi
+
+          if [ -n "${{ github.event.inputs.hashtags }}" ]; then
+            ARGS="$ARGS --hashtags=${{ github.event.inputs.hashtags }}"
+          elif [ -n "${DEFAULT_HASHTAGS:-}" ]; then
+            ARGS="$ARGS --hashtags=${DEFAULT_HASHTAGS}"
+          fi
+
+          if [ -n "${{ github.event.inputs.image }}" ]; then
+            ARGS="$ARGS --image=${{ github.event.inputs.image }}"
+          fi
+
+          echo "node --no-warnings --experimental-strip-types ./src/post.ts $ARGS \"$MSG\""
+          node --no-warnings --experimental-strip-types ./src/post.ts $ARGS "$MSG"
