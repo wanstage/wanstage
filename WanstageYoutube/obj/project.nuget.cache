@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "dgSpecHash": "dzBU2zsA7Bo=",
+  "success": true,
+  "projectFilePath": "/Users/okayoshiyuki/WANSTAGE/WanstageYoutube/WanstageYoutube.csproj",
+  "expectedPackageFiles": [
+    "/Users/okayoshiyuki/.nuget/packages/google.apis/1.70.0/google.apis.1.70.0.nupkg.sha512",
+    "/Users/okayoshiyuki/.nuget/packages/google.apis.auth/1.70.0/google.apis.auth.1.70.0.nupkg.sha512",
+    "/Users/okayoshiyuki/.nuget/packages/google.apis.core/1.70.0/google.apis.core.1.70.0.nupkg.sha512",
+    "/Users/okayoshiyuki/.nuget/packages/google.apis.youtube.v3/1.70.0.3847/google.apis.youtube.v3.1.70.0.3847.nupkg.sha512",
+    "/Users/okayoshiyuki/.nuget/packages/newtonsoft.json/13.0.3/newtonsoft.json.13.0.3.nupkg.sha512",
+    "/Users/okayoshiyuki/.nuget/packages/system.codedom/7.0.0/system.codedom.7.0.0.nupkg.sha512",
+    "/Users/okayoshiyuki/.nuget/packages/system.management/7.0.2/system.management.7.0.2.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1603",
+      "level": "Warning",
+      "message": "WanstageYoutube は Google.Apis.YouTube.v3 (>= 1.70.0) に依存しますが、Google.Apis.YouTube.v3 1.70.0 が見つかりませんでした。代わりに Google.Apis.YouTube.v3 1.70.0.3847 が解決されました。",
+      "projectPath": "/Users/okayoshiyuki/WANSTAGE/WanstageYoutube/WanstageYoutube.csproj",
+      "warningLevel": 1,
+      "filePath": "/Users/okayoshiyuki/WANSTAGE/WanstageYoutube/WanstageYoutube.csproj",
+      "libraryId": "Google.Apis.YouTube.v3",
+      "targetGraphs": [
+        "net9.0"
+      ]
+    }
+  ]
+}
