@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { basename, extname } from 'node:path';
-import { postToSlack } from './providers/slack';
-import { postViaZapier } from './providers/zapier';
+import { postToSlack } from './providers/slack.ts';
+import { postViaZapier, ZapierImage } from './providers/zapier.ts';
 
 function pickArg(flag: string): string | undefined {
   const m = process.argv.find((a) => a.startsWith(`--${flag}=`));
@@ -21,7 +21,7 @@ function mimeFromExt(p: string): string {
 
 async function buildZapierImage(
   imagePath?: string
-): Promise<{ filename: string; data: string } | undefined> {
+): Promise<ZapierImage | undefined> {
   if (!imagePath) return undefined;
   const buf = await readFile(imagePath);
   const mime = mimeFromExt(imagePath);
@@ -60,10 +60,6 @@ function pickTarget(): 'slack' | 'x' | 'instagram' | 'bluesky' | 'mastodon' {
   return 'slack';
 }
 
-// --video-name=NAME (Google Sheets の video_name 列向け)
-const vnameArg = process.argv.find((a) => a.startsWith('--video-name='));
-const videoName = vnameArg ? vnameArg.replace('--video-name=', '') : undefined;
-
 async function main() {
   const target = pickTarget();
   const imagePath = pickArg('image');
@@ -83,10 +79,7 @@ async function main() {
   }
 
   // それ以外は Zapier 経由（鍵が無くても動く）
-  await postViaZapier(target as any, finalMsg, {
-    image: zapierImage,
-    video_name: videoName,
-  });
+  await postViaZapier(target, finalMsg, zapierImage);
   console.log(`Posted(zapier→${target}):`, finalMsg);
 }
 

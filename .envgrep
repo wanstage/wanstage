@@ -1,0 +1,1 @@
+YT_REFRESH_TOKEN=＜今出た文字列そのまま＞ -E YT_CLIENT_ID|YT_CLIENT_SECRET|YT_REFRESH_TOKEN .envnpm run yt:upload -- out/out.mp4 --title WANSTAGE 自動投稿テスト --desc CLI連携でアップロード --privacy unlisted --tags wanstage,test

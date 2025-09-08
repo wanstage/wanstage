@@ -1,0 +1,100 @@
+name: auto-post-matrix
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # 00:00 UTC = 09:00 JST
+  workflow_dispatch:
+    inputs:
+      to:
+        description: '投稿先 (bluesky|mastodon|x|instagram|slack)'
+        required: false
+        default: 'bluesky'
+        type: choice
+        options:
+          - bluesky
+          - mastodon
+          - x
+          - instagram
+          - slack
+      text:
+        description: '投稿本文（未入力なら定型＋日付）'
+        required: false
+        type: string
+      image:
+        description: '画像パス (例: public/sample.jpg) ※リポジトリ内にあるファイル'
+        required: false
+        type: string
+      dateprefix:
+        description: '文頭に日時付与'
+        required: false
+        default: 'true'
+        type: boolean
+      hashtags:
+        description: 'カンマ区切りのハッシュタグ（例: wanstage,test）'
+        required: false
+        type: string
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [bluesky, mastodon] # ←必要に応じて追加/削除
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - run: npm ci
+
+      # デフォルト値の準備（手動実行時に inputs で上書き可能）
+      - name: Compute message and flags
+        id: vars
+        shell: bash
+        run: |
+          TEXT="${{ inputs.text }}"
+          if [ -z "$TEXT" ]; then
+            # 例: デフォルト本文（JSTを意識してUTCの現在時刻を文頭に）
+            TS="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+            TEXT="定期投稿 ${TS}"
+          fi
+          DATEPREFIX="${{ inputs.dateprefix }}"
+          HASHTAGS="${{ inputs.hashtags }}"
+          IMAGE="${{ inputs.image }}"
+          # matrix.target を優先。手動で to が入っていればそれを採用。
+          TO="${{ inputs.to }}"
+          if [ -z "$TO" ]; then TO="${{ matrix.target }}"; fi
+
+          echo "text=$TEXT"        >> "$GITHUB_OUTPUT"
+          echo "dateprefix=$DATEPREFIX" >> "$GITHUB_OUTPUT"
+          echo "hashtags=$HASHTAGS" >> "$GITHUB_OUTPUT"
+          echo "image=$IMAGE"       >> "$GITHUB_OUTPUT"
+          echo "to=$TO"             >> "$GITHUB_OUTPUT"
+
+      - name: Post
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} # Slack直投稿を使うなら
+          ZAPIER_HOOK_URL: ${{ secrets.ZAPIER_HOOK_URL }} # 無料構成の要。Zapier Webhook
+          DEFAULT_HASHTAGS: ${{ vars.DEFAULT_HASHTAGS }} # 例: リポジトリ変数に "wanstage,test"
+          TZ: 'Asia/Tokyo'
+        run: |
+          CMD=(node --no-warnings --experimental-strip-types ./src/post.ts \
+            --to="${{ steps.vars.outputs.to }}" )
+
+          # 任意フラグ
+          if [ "${{ steps.vars.outputs.dateprefix }}" = "true" ]; then
+            CMD+=("--dateprefix")
+          fi
+          if [ -n "${{ steps.vars.outputs.hashtags }}" ]; then
+            CMD+=("--hashtags=${{ steps.vars.outputs.hashtags }}")
+          fi
+          if [ -n "${{ steps.vars.outputs.image }}" ]; then
+            CMD+=("--image=${{ steps.vars.outputs.image }}")
+          fi
+
+          CMD+=("${{ steps.vars.outputs.text }}")
+          echo "+ ${CMD[@]}"
+          "${CMD[@]}"

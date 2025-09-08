@@ -20,3 +20,18 @@ logs/
 
 # Editors
 .vscode/
+.env
+
+# --- WANSTAGE additions ---
+# secrets
+.env
+.env.*
+key.json
+*.pem
+*.p12
+# Node build
+node_modules/
+dist/
+# .NET build
+bin/
+obj/
