@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ASSETS="${1:-$HOME/WANSTAGE/assets/images}"
+OUT="${2:-$HOME/WANSTAGE/out/feed.jpg}"
+shopt -s nullglob
+mapfile -t imgs < <(printf "%s\n" "$ASSETS"/*.{jpg,jpeg,png,webp} 2>/dev/null || true)
+[ ${#imgs[@]} -gt 0 ] || { echo "[wan-pick-square] no images in $ASSETS" >&2; exit 1; }
+pick="${imgs[RANDOM % ${#imgs[@]}]}"
+magick convert "$pick" -auto-orient -resize "1080x1080^" -gravity center -extent 1080x1080 -quality 92 "$OUT"
+echo "$OUT"

@@ -1,7 +1,0 @@
-{
-  "python.defaultInterpreterPath": "/Users/okayoshiyuki/WANSTAGE/.venv-dev/bin/python",
-  "python.testing.pytestEnabled": true,
-  "python.formatting.provider": "black",
-  "python.analysis.typeCheckingMode": "basic",
-  "ruff.enable": true
-}
