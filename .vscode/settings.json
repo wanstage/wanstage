@@ -1,9 +1,7 @@
 {
-  "eslint.useFlatConfig": true,
-  "eslint.validate": ["javascript", "typescript", "typescriptreact"],
-  "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "commentTranslate.targetLanguage": "jv",
-  "python2.linting.pylintEnabled": true
+  "python.defaultInterpreterPath": "/Users/okayoshiyuki/WANSTAGE/.venv-dev/bin/python",
+  "python.testing.pytestEnabled": true,
+  "python.formatting.provider": "black",
+  "python.analysis.typeCheckingMode": "basic",
+  "ruff.enable": true
 }

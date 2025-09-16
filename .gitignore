@@ -1,37 +1,19 @@
-# Python venv
+# Python
 venv/
-.venv/
-insta-auto/venv/
-insta-auto/.venv/
-
-# Python cache
 __pycache__/
 *.pyc
 
 # Node
 node_modules/
-insta-auto/node_modules/
-
-# Build / Logs / Local
 dist/
-build/
+out/
+
+# Logs & Env
 logs/
+.env
+
+# Archives / backups
+*.bak
+*.zip
+*.tar.gz
 *.log
-
-# Editors
-.vscode/
-.env
-
-# --- WANSTAGE additions ---
-# secrets
-.env
-.env.*
-key.json
-*.pem
-*.p12
-# Node build
-node_modules/
-dist/
-# .NET build
-bin/
-obj/
