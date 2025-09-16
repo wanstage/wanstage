@@ -1,0 +1,17 @@
+rules:
+  - match: "amazon.co.jp"
+    add_params:
+      tag: "${AMAZON_TAG}"          # .env で設定
+      linkCode: "ll1"
+    utm: true
+  - match: "rakuten.co.jp"
+    add_params:
+      scid: "${RAKUTEN_AFFILIATE_ID}"
+    utm: true
+  - match: "yourshop.myshopify.com"
+    add_params: {}
+    utm: true
+defaults:
+  utm_source: "wanstage"
+  utm_medium: "social"
+  utm_campaign: "${UTM_CAMPAIGN:-auto}"

@@ -1,0 +1,51 @@
+import csv
+import datetime
+import os
+
+import gspread
+from google.oauth2.service_account import Credentials
+
+BASE = os.path.expanduser("~/WANSTAGE")
+LOG = os.path.join(BASE, "logs", "ab_log.csv")
+SHEET_ID = os.getenv("GSPREAD_SHEET_ID", "")
+SA_JSON = os.path.join(BASE, "google_service_account.json")
+
+
+def load_sheet():
+    if not (SHEET_ID and os.path.exists(SA_JSON)):
+        return None
+    scope = ["https://www.googleapis.com/auth/spreadsheets"]
+    creds = Credentials.from_service_account_file(SA_JSON, scopes=scope)
+    gc = gspread.authorize(creds)
+    return gc.open_by_key(SHEET_ID).sheet1
+
+
+def main():
+    sh = load_sheet()
+    if not sh:
+        return
+    rows = []
+    if os.path.exists(LOG):
+        with open(LOG, encoding="utf-8") as f:
+            r = csv.DictReader(f)
+            rows = list(r)
+    today = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # 1回につき直近50行だけ送る（重複挿入はSheet側でフィルタ）
+    rows = rows[-50:]
+    values = [
+        [
+            today,
+            x.get("platform", ""),
+            x.get("variant_id", ""),
+            x.get("cta", ""),
+            x.get("link_label", ""),
+            x.get("url", ""),
+        ]
+        for x in rows
+    ]
+    if values:
+        sh.append_rows(values, value_input_option="USER_ENTERED")
+
+
+if __name__ == "__main__":
+    main()
