@@ -1,5 +1,5 @@
 import Database = require('better-sqlite3');
-import fs from 'fs';
+import _fs from 'fs';
 import path from 'path';
 
 const DB_PATH = process.env.DB_PATH || path.join(process.cwd(), 'wanstage.db');

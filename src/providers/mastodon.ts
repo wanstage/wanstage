@@ -1,6 +1,6 @@
 import { File, FormData } from 'formdata-node';
-import { Readable } from 'node:stream';
-import { fileURLToPath } from 'node:url';
+import { Readable as _Readable } from 'node:stream';
+import { fileURLToPath as _fileURLToPath } from 'node:url';
 import { lookup as mimeLookup } from 'mime-types';
 import { request } from 'undici';
 import { readFile } from 'node:fs/promises';
