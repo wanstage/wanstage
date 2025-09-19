@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'node:path';
 import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath as _fileURLToPath } from 'node:url';
 
 import messageController from './controllers/message.js';
 import enqueteController from './controllers/enquete.js';
