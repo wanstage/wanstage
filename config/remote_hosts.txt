@@ -1,0 +1,4 @@
+# name,host,user,port
+api1,192.168.1.10,ubuntu,22
+db-main,db.example.com,ec2-user,22
+edge-a,10.0.0.5,admin,2222

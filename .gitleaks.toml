@@ -1,0 +1,8 @@
+[allowlist]
+description = "allow known placeholders and sample files"
+regexes = [
+  '''https://hooks\.slack\.com/services/(XXX|xxxx)/(YYY|xxxx)/(ZZZ|xxxx)'''
+]
+paths = [
+  '''^\.env\.sample$'''
+]

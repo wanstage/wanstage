@@ -1,5 +1,6 @@
-openai
+fastapi
+uvicorn
 requests
-Pillow
-python-dotenv
-
+gspread
+google-auth
+# ↑ 運用で使う最小限のみ

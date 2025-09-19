@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$HOME/WANSTAGE"
+LOGDIR="$ROOT/logs"; mkdir -p "$LOGDIR"
+OUT_JSON="$LOGDIR/last_post.json"
+
+# 0) .env 読み込み
+if [ -f "$ROOT/.env" ]; then set -a; . "$ROOT/.env"; set +a; fi
+
+ts() { date '+%Y-%m-%d %H:%M:%S'; }
+
+echo "[$(ts)] Generate post..." | tee -a "$LOGDIR/full_auto.log"
+
+PROMPT=${POST_PROMPT:-"短くシンプルに作業効率アップの投稿文を書いてください"}
+MODEL=${OPENAI_TEXT_MODEL:-"gpt-4o-mini"}
+
+gen_text() {
+  if command -v openai >/dev/null 2>&1; then
+    RAW="$(openai api chat.completions.create -m "$MODEL" -g user "$PROMPT" 2>/dev/null || true)"
+    if [ "${RAW#\{}" != "$RAW" ]; then
+      if command -v jq >/dev/null 2>&1; then
+        printf '%s' "$RAW" | jq -r '.choices[0].message.content // .choices[0].text // .output_text // empty'
+      else
+        printf '%s' "$RAW"
+      fi
+    else
+      printf '%s' "$RAW"
+    fi
+  fi
+}
+
+TEXT="$(gen_text || true)"
+if [ -z "${TEXT// }" ]; then
+  TEXT="作業効率アップ：今日やることを3つに絞って、まず1つだけ終わらせよう。#生産性 #継続"
+  ENGINE="fallback"
+else
+  ENGINE="openai"
+fi
+
+TS="$(ts)"
+MODEL_USED="$MODEL"
+jq -n \
+  --arg text "$TEXT" \
+  --arg engine "$ENGINE" \
+  --arg model "$MODEL_USED" \
+  --arg ts    "$TS" \
+  --arg cta "👉 続きはプロフのリンクから" \
+  --arg link_label "詳細＆特典はこちら" \
+  --arg variant_id "A" \
+  '{text:$text, link_url:"", variant:{cta:$cta, link_label:$link_label, variant_id:$variant_id}, meta:{engine:$engine, model:$model, ts:$ts}}' \
+  > "$OUT_JSON"
+
+# Slack通知
+if [ -n "${SLACK_WEBHOOK_URL:-}" ]; then
+  python3 - <<'PY' 2>/dev/null || true
+import os, json, ssl, urllib.request
+try:
+    import certifi
+    ctx = ssl.create_default_context(cafile=certifi.where())
+except Exception:
+    ctx = ssl.create_default_context()
+
+p=os.path.expanduser('~/WANSTAGE/logs/last_post.json')
+j=json.load(open(p,encoding='utf-8'))
+msg=j.get("text","").strip() or "（本文なし）"
+wh=os.environ.get("SLACK_WEBHOOK_URL")
+if wh:
+    data=json.dumps({"text":msg}).encode('utf-8')
+    req=urllib.request.Request(wh, data=data, headers={'Content-Type':'application/json'})
+    with urllib.request.urlopen(req, timeout=30, context=ctx) as r:
+        print("[slack] status:", r.status)
+else:
+    print("[slack] SLACK_WEBHOOK_URL 未設定")
+PY
+else
+  echo "[slack] SKIP (SLACK_WEBHOOK_URL 未設定)"
+fi
+
+echo "[$(ts)] done." | tee -a "$LOGDIR/full_auto.log"
+# --- Append to Google Sheet (Service Account) ---
+python3 - <<'PY'
+import os, json, csv, datetime
+import gspread
+from google.oauth2.service_account import Credentials
+
+BASE = os.path.expanduser('~/WANSTAGE')
+CREDS = os.path.join(BASE, 'google_credentials.json')
+SHEET_ID = os.environ.get('GOOGLE_SHEET_ID', '').strip()
+LAST_POST = os.path.join(BASE, 'logs', 'last_post.json')
+CSV_FALLBACK = os.path.join(BASE, 'logs', 'post_log.csv')
+
+text = ''
+try:
+    with open(LAST_POST, encoding='utf-8') as f:
+        text = (json.load(f).get('text') or '').strip()
+except Exception:
+    text = ''
+ts = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+row = [ts, text]
+
+def append_csv():
+    os.makedirs(os.path.dirname(CSV_FALLBACK), exist_ok=True)
+    newfile = not os.path.exists(CSV_FALLBACK)
+    with open(CSV_FALLBACK, 'a', newline='', encoding='utf-8') as f:
+        w = csv.writer(f)
+        if newfile:
+            w.writerow(['timestamp','text'])
+        w.writerow(row)
+    print('[OK] wrote CSV:', CSV_FALLBACK)
+
+try:
+    if not SHEET_ID:
+        print('[WARN] GOOGLE_SHEET_ID not set. Fallback to CSV.')
+        append_csv()
+    else:
+        scopes = ['https://www.googleapis.com/auth/spreadsheets','https://www.googleapis.com/auth/drive']
+        creds = Credentials.from_service_account_file(CREDS, scopes=scopes)
+        gc = gspread.authorize(creds)
+        sh = gc.open_by_key(SHEET_ID)
+        sh.sheet1.append_row(row, value_input_option='USER_ENTERED')
+        print('[OK] appended to sheet:', sh.url)
+except Exception as e:
+    print('[WARN] sheet append failed. Fallback to CSV. reason:', e)
+    append_csv()
+PY
+# --- /Append to Google Sheet ---
+# (error branch) Slack warn
+if [ -n "$SLACK_WEBHOOK_URL" ]; then
+  curl -s -X POST -H 'Content-type: application/json' \
+    --data '{"text":"[WARN] 投稿失敗。ログを確認してください"}' \
+    "$SLACK_WEBHOOK_URL" >/dev/null 2>&1 || true
+fi

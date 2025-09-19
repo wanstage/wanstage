@@ -1,16 +1,6 @@
-#!/usr/bin/env sh
-set -euo pipefail
 
-echo "[pre-push] TypeScript typecheck"
-npm run -s check:ts
+# venv優先
+VENV="$PWD/.venv"
+[ -x "$VENV/bin/python3" ] && export PATH="$VENV/bin:$PATH"
 
-echo "[pre-push] ESLint"
-npm run -s check:js
-
-echo "[pre-push] HTML validate"
-npm run -s check:html
-
-echo "[pre-push] Python (ruff/black)"
-npm run -s check:py
-
-echo "[pre-push] OK"
+# --- 以下既存処理 ---

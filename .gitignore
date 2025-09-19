@@ -1,37 +1,23 @@
-# Python venv
-venv/
-.venv/
-insta-auto/venv/
-insta-auto/.venv/
+# env
+*.env
+*.env.*
+.en
+.wan-remote.env
 
-# Python cache
-__pycache__/
-*.pyc
-
-# Node
-node_modules/
-insta-auto/node_modules/
-
-# Build / Logs / Local
-dist/
-build/
+# local ops artifacts
+run/
+remote/
 logs/
-*.log
+*.bak.*
 
-# Editors
+# python venv
+.venv/
+.venv-runtime/
+
+# editor
 .vscode/
-.env
 
-# --- WANSTAGE additions ---
-# secrets
-.env
-.env.*
-key.json
-*.pem
-*.p12
-# Node build
+# node / frontend build
 node_modules/
 dist/
-# .NET build
-bin/
-obj/
+out/

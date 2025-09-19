@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+THRESHOLD=${1:-70}
+SLACK="${SLACK_WEBHOOK_URL:-}"
+OFF=$(ps -A -o pid,pcpu,pmem,command= | egrep 'python|node|uvicorn|gunicorn|nodemon' | awk -v T="$THRESHOLD" '$2+0 > T')
+[ -z "$OFF" ] && exit 0
+echo "[wan-guard] High CPU > ${THRESHOLD}%"; echo "$OFF"
+if [ -n "$SLACK" ]; then
+  MSG="WANSTAGE Guard: High CPU\n\`\`\`\n$OFF\n\`\`\`\nAction: pkill"
+  curl -s -X POST -H 'Content-type: application/json' --data "$(printf '{"text":"%s"}' "$MSG")" "$SLACK" >/dev/null 2>&1 || true
+fi
+echo "$OFF" | awk '{print $1}' | xargs -I{} kill -9 {} 2>/dev/null || true

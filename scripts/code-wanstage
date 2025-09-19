@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+exec /usr/local/bin/code \
+  --user-data-dir "$HOME/WANSTAGE/.vscode-profile" \
+  --extensions-dir "$HOME/WANSTAGE/.vscode-exts" \
+  "$@"

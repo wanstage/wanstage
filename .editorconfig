@@ -1,0 +1,29 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Makefile はタブ必須（ここが超重要）
+[Makefile]
+indent_style = tab
+indent_size = 4
+trim_trailing_whitespace = false
+
+# シェルスクリプト（zsh/bash）
+[*.{sh,zsh}]
+indent_style = space
+indent_size = 2
+
+# Markdown は末尾スペース維持（改行演出用）
+[*.md]
+trim_trailing_whitespace = false
+
+# YAML/JSON は2スペース固定
+[*.{yml,yaml,json}]
+indent_style = space
+indent_size = 2

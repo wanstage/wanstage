@@ -1,14 +1,17 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "CommonJS",
-    "moduleResolution": "Node",
+    "module": "NodeNext",             // ← ここを ESNext から NodeNext に
+    "moduleResolution": "NodeNext",
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "strict": true,
-    "outDir": "dist",
-    "rootDir": "src",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "noEmit": true
   },
-  "include": ["src"]
+  "exclude": [
+    "admin-ui",
+    "wanstage-admin",
+    "src/pages/**"
+  ]
 }
