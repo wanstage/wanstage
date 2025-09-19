@@ -21,3 +21,13 @@ logs/
 node_modules/
 dist/
 out/
+
+# db / backups
+*.db
+*.db-journal
+backup-*.db
+
+# generic backups
+*.bak
+*.bak.*
+package.json.bak
