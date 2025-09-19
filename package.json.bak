@@ -1,4 +1,7 @@
 {
+  "type": "module",
+  "name": "wanstage-node-ts",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec \"ts-node src/index.ts\"",
@@ -56,8 +59,6 @@
     "@types/express": "^5.0.3",
     "@types/mime-types": "^3.0.1",
     "@types/node": "^24.4.0",
-    "@types/react": "^19.1.13",
-    "@types/react-dom": "^19.1.9",
     "@typescript-eslint/eslint-plugin": "^8.42.0",
     "@typescript-eslint/parser": "^8.42.0",
     "dotenv": "^17.2.2",
@@ -73,13 +74,10 @@
     "nodemon": "^3.1.10",
     "playwright": "^1.41.2",
     "prettier": "^3.6.2",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
     "sqlite3": "^5.1.7",
     "ts-node": "^10.9.2",
     "tsx": "^4.7.1",
     "typescript": "^5.9.2",
-    "typescript-eslint": "^8.44.0",
     "vitest": "^3.2.4"
   },
   "lint-staged": {

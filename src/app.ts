@@ -2,7 +2,6 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'node:path';
 import fs from 'node:fs';
-import { fileURLToPath as _fileURLToPath } from 'node:url';
 
 import messageController from './controllers/message.js';
 import enqueteController from './controllers/enquete.js';
@@ -19,8 +18,8 @@ app.use('/api/login', loginController);
 
 const publicDir = (() => {
   const cands = [
-    require('node:path').resolve(process.cwd(), 'public'),
-    require('node:path').resolve(__dirname, 'public'),
+    path.resolve(process.cwd(), 'public'),
+    path.resolve(__dirname, 'public'),
   ];
   for (const c of cands) {
     try {
