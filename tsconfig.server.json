@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/pages/**", "scripts", "admin-ui", "wanstage-admin", "drizzle.config.ts", "dist", "node_modules"]
+}
