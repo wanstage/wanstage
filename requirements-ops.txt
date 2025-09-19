@@ -1,0 +1,24 @@
+# --- WANSTAGE 運用用 最小セット ---
+
+# 基本ユーティリティ
+requests
+python-dotenv
+slack_sdk
+
+# データ解析
+pandas
+numpy
+
+# 可視化 / ダッシュボード
+streamlit
+plotly
+watchdog   # Streamlit の更新検知用
+
+# Google 連携
+gspread
+google-auth
+google-auth-oauthlib
+google-analytics-data
+
+# Notion
+notion-client

@@ -40,18 +40,16 @@ fi
 
 TS="$(ts)"
 MODEL_USED="$MODEL"
-cat > "$OUT_JSON" <<JSON
-{
-  "text": $(printf '%s' "$TEXT" | python3 - <<'PY'
-import sys,json
-print(json.dumps(sys.stdin.read().strip(), ensure_ascii=False))
-PY
-),
-  "link_url": "",
-  "variant": {"cta":"👉 続きはプロフのリンクから","link_label":"詳細＆特典はこちら","variant_id":"A"},
-  "meta": {"engine": "$ENGINE", "model": "$MODEL_USED", "ts": "$TS"}
-}
-JSON
+jq -n \
+  --arg text "$TEXT" \
+  --arg engine "$ENGINE" \
+  --arg model "$MODEL_USED" \
+  --arg ts    "$TS" \
+  --arg cta "👉 続きはプロフのリンクから" \
+  --arg link_label "詳細＆特典はこちら" \
+  --arg variant_id "A" \
+  '{text:$text, link_url:"", variant:{cta:$cta, link_label:$link_label, variant_id:$variant_id}, meta:{engine:$engine, model:$model, ts:$ts}}' \
+  > "$OUT_JSON"
 
 # Slack通知
 if [ -n "${SLACK_WEBHOOK_URL:-}" ]; then
@@ -80,3 +78,56 @@ else
 fi
 
 echo "[$(ts)] done." | tee -a "$LOGDIR/full_auto.log"
+# --- Append to Google Sheet (Service Account) ---
+python3 - <<'PY'
+import os, json, csv, datetime
+import gspread
+from google.oauth2.service_account import Credentials
+
+BASE = os.path.expanduser('~/WANSTAGE')
+CREDS = os.path.join(BASE, 'google_credentials.json')
+SHEET_ID = os.environ.get('GOOGLE_SHEET_ID', '').strip()
+LAST_POST = os.path.join(BASE, 'logs', 'last_post.json')
+CSV_FALLBACK = os.path.join(BASE, 'logs', 'post_log.csv')
+
+text = ''
+try:
+    with open(LAST_POST, encoding='utf-8') as f:
+        text = (json.load(f).get('text') or '').strip()
+except Exception:
+    text = ''
+ts = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+row = [ts, text]
+
+def append_csv():
+    os.makedirs(os.path.dirname(CSV_FALLBACK), exist_ok=True)
+    newfile = not os.path.exists(CSV_FALLBACK)
+    with open(CSV_FALLBACK, 'a', newline='', encoding='utf-8') as f:
+        w = csv.writer(f)
+        if newfile:
+            w.writerow(['timestamp','text'])
+        w.writerow(row)
+    print('[OK] wrote CSV:', CSV_FALLBACK)
+
+try:
+    if not SHEET_ID:
+        print('[WARN] GOOGLE_SHEET_ID not set. Fallback to CSV.')
+        append_csv()
+    else:
+        scopes = ['https://www.googleapis.com/auth/spreadsheets','https://www.googleapis.com/auth/drive']
+        creds = Credentials.from_service_account_file(CREDS, scopes=scopes)
+        gc = gspread.authorize(creds)
+        sh = gc.open_by_key(SHEET_ID)
+        sh.sheet1.append_row(row, value_input_option='USER_ENTERED')
+        print('[OK] appended to sheet:', sh.url)
+except Exception as e:
+    print('[WARN] sheet append failed. Fallback to CSV. reason:', e)
+    append_csv()
+PY
+# --- /Append to Google Sheet ---
+# (error branch) Slack warn
+if [ -n "$SLACK_WEBHOOK_URL" ]; then
+  curl -s -X POST -H 'Content-type: application/json' \
+    --data '{"text":"[WARN] 投稿失敗。ログを確認してください"}' \
+    "$SLACK_WEBHOOK_URL" >/dev/null 2>&1 || true
+fi

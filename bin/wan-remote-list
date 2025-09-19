@@ -1,0 +1,120 @@
+#!/usr/bin/env bash
+export LC_ALL=ja_JP.UTF-8
+export LANG=ja_JP.UTF-8
+set -euo pipefail
+
+ROOT="$HOME/WANSTAGE"
+CONF="$ROOT/config/remote_hosts.txt"
+RUNDIR="$ROOT/run";     mkdir -p "$RUNDIR"
+LOGDIR="$ROOT/logs";    mkdir -p "$LOGDIR"
+ENVFILE="$ROOT/.wan-remote.env"; [ -f "$ENVFILE" ] && . "$ENVFILE" || true
+
+TS() { date '+%F %T %Z'; }
+NOW_EPOCH() { date +%s; }
+
+# === 通知関数 ===
+notify_slack() {
+  local msg="$1"
+  [ -n "${SLACK_WEBHOOK_URL:-}" ] || return 0
+  curl -sS -X POST -H 'Content-type: application/json' \
+    --data "{\"text\":\"${msg//$'\n'/\\n}\"}" \
+    "$SLACK_WEBHOOK_URL" >/dev/null 2>&1 || true
+}
+
+notify_line() {
+  local msg="$1"
+  [ -n "${LINE_NOTIFY_TOKEN:-}" ] || return 0
+  curl -sS -X POST https://notify-api.line.me/api/notify \
+    -H "Authorization: Bearer ${LINE_NOTIFY_TOKEN}" \
+    -F "message=${msg}" >/dev/null 2>&1 || true
+}
+
+cooldown_ok() {
+  # 変化のキーごとにクールダウン（同一アラートの連投防止）
+  local key="$1"
+  local cd_min="${NOTIFY_COOLDOWN_MIN:-3}"
+  [ "$cd_min" = "0" ] && return 0
+  local tag="$RUNDIR/notify_${key}.stamp"
+  local now="$(NOW_EPOCH)"
+  if [ -f "$tag" ]; then
+    local prev="$(cat "$tag" 2>/dev/null || echo 0)"
+    local diff=$(( now - prev ))
+    [ "$diff" -ge $(( cd_min * 60 )) ] || return 1
+  fi
+  echo "$now" > "$tag"
+  return 0
+}
+
+echo "[wan-remote-list] started at $(TS)"
+
+while true; do
+  CUR="$RUNDIR/remote_status.current.tsv"
+  LAST="$RUNDIR/remote_status.last.tsv"
+
+  if [ ! -f "$CONF" ]; then
+    echo "[wan-remote-list] warn: config not found $CONF"
+    sleep 30; continue
+  fi
+
+  # 現在ステータス収集 → TSV: name<TAB>host<TAB>ping<TAB>ssh
+  : > "$CUR"
+  while IFS=, read -r name host user port; do
+    # 空行＆#行スキップ
+    [ -z "${name:-}" ] && continue
+    [ "${name#\#}" != "$name" ] && continue
+    host="${host:-}"; user="${user:-}"; port="${port:-22}"
+
+    # ping（1回/1秒）
+    ping_ok="down"
+    if ping -c1 -W1 "$host" >/dev/null 2>&1; then ping_ok="up"; fi
+
+    # ssh（3秒でecho ok）
+    ssh_ok="down"
+    if ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o ConnectTimeout=3 -p "$port" "$user@$host" "echo ok" >/dev/null 2>&1; then
+      ssh_ok="up"
+    fi
+
+    printf "%s\t%s\t%s\t%s\n" "$name" "$host" "$ping_ok" "$ssh_ok" >> "$CUR"
+    # 軽い間隔
+    sleep 0.2
+  done < "$CONF"
+
+  # 初回：LASTが無ければコピーして終わり（通知はしない）
+  if [ ! -f "$LAST" ]; then
+    cp -f "$CUR" "$LAST"
+    echo "[wan-remote-list] baseline captured $(TS)"
+    sleep 60; continue
+  fi
+
+  # 差分検出（ping/sshいずれか変化）
+  # joinのためにソート
+  CURS="$CUR.sorted"; LASTS="$LAST.sorted"
+  sort -k1,1 "$CUR"  > "$CURS"
+  sort -k1,1 "$LAST" > "$LASTS"
+
+  CHANGES="$(join -t $'\t' -a1 -a2 -e 'NA' -o 0,1.2,1.3,1.4,2.2,2.3,2.4 "$CURS" "$LASTS" || true)"
+
+  while IFS=$'\t' read -r name h_cur ping_cur ssh_cur h_last ping_last ssh_last; do
+    [ -z "${name:-}" ] && continue
+    # 変化条件
+    if [ "$ping_cur" != "$ping_last" ] || [ "$ssh_cur" != "$ssh_last" ]; then
+      msg="【WANSTAGE/remote】${name}\nhost: ${h_cur}\n変化: ping ${ping_last}→${ping_cur}, ssh ${ssh_last}→${ssh_cur}\n@$(TS)"
+      # クールダウンキー（ホスト＋状態）
+      key="$(echo "${name}_${ping_cur}_${ssh_cur}" | tr '/ ' '__')"
+      if cooldown_ok "$key"; then
+        notify_slack "$msg"
+        notify_line "$msg"
+      fi
+      # 端末ログにも出力
+      echo "[wan-remote-list] change: $msg"
+    fi
+  done <<< "$CHANGES"
+
+  # 現在をLASTに反映
+  mv -f "$CUR" "$LAST" 2>/dev/null || cp -f "$CUR" "$LAST"
+  rm -f "$CURS" "$LASTS" 2>/dev/null || true
+
+  # 1分間隔
+  echo "[wan-remote-list] heartbeat $(TS)"
+  sleep 60
+done

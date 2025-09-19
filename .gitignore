@@ -40,3 +40,9 @@ post.json
 post.txt
 otter.png
 change.diff
+
+# secrets
+keys/
+*.json
+.env
+
