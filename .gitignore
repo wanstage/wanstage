@@ -1,48 +1,23 @@
-# Python
-venv/
-__pycache__/
-*.pyc
+# env
+*.env
+*.env.*
+.en
+.wan-remote.env
 
-# Node
+# local ops artifacts
+run/
+remote/
+logs/
+*.bak.*
+
+# python venv
+.venv/
+.venv-runtime/
+
+# editor
+.vscode/
+
+# node / frontend build
 node_modules/
 dist/
 out/
-
-# Logs & Env
-logs/
-.env
-
-# Archives / backups
-*.bak
-*.zip
-*.tar.gz
-*.log
-# Local / secrets / artifacts
-.envrc
-.direnv/
-.vscode/
-.vscode-profile/
-.vscode-exts/
-node_modules/
-logs/
-out/
-shortener_data/
-*.db
-*.bak
-*.mp4
-
-# tokens/credentials (個別に明示)
-google_credentials.json
-google_oauth.json
-shortener.db
-shortener.pid
-post.json
-post.txt
-otter.png
-change.diff
-
-# secrets
-keys/
-*.json
-.env
-
