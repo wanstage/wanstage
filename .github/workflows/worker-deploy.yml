@@ -1,74 +1,51 @@
-mkdir -p ~/WANSTAGE/.github/workflows
-cat > ~/WANSTAGE/.github/workflows/worker-deploy.yml <<'YAML'
-name: Deploy CF Worker
+name: Deploy Worker (Multi-Lang Ready)
 
 on:
   push:
-    branches: [ main ]
-    paths:
-      - 'cf-worker-notify/**'
-      - '.github/workflows/worker-deploy.yml'
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: cf-worker-notify
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
 
-      - name: Install wrangler
-        run: npm i -g wrangler@4
-
-      - name: Deploy
-        env:
-          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-        run: |
-          echo "account_id = \"${CF_ACCOUNT_ID}\"" >> wrangler.account.toml
-          wrangler whoami --quiet || true
-          wrangler deploy
-YAMLname: Deploy CF Worker
-
-on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'cf-worker-notify/**'
-      - '.github/workflows/worker-deploy.yml'
-  workflow_dispatch:
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: cf-worker-notify
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          node-version: '20'
+          python-version: "3.11"
 
-      - name: Install wrangler
-        run: npm i -g wrangler@4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
 
-      - name: Deploy
-        env:
-          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Setup C/C++ toolchain
+        run: sudo apt-get update && sudo apt-get install -y build-essential
+
+      - name: Export env
         run: |
-          echo "account_id = \"${CF_ACCOUNT_ID}\"" >> wrangler.account.toml
-          wrangler whoami --quiet || true
-          wrangler deploy
+          echo "CF_API_TOKEN=${{ secrets.CF_API_TOKEN }}" >> $GITHUB_ENV
+          echo "CF_ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }}" >> $GITHUB_ENV
+
+      - name: Install Node deps
+        run: npm install
+
+      - name: Publish to Cloudflare Workers
+        run: npx wrangler deploy --env production
