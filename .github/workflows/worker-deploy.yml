@@ -2,7 +2,7 @@ name: Deploy Worker (Multi-Lang Ready)
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
@@ -11,6 +11,10 @@ jobs:
     permissions:
       contents: read
 
+    defaults:
+      run:
+        shell: bash
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -18,11 +22,35 @@ jobs:
           submodules: true
           fetch-depth: 0
 
-- name: Publish to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          command: deploy --env production
-          workingDirectory: cf-worker-notify
-        env:  LINE_NOTIFY_TOKEN: ${{ secrets.LINE_NOTIFY_TOKEN }}
+          node-version: 20
+
+      - name: Install Wrangler
+        run: npm i -g wrangler@^3
+
+      - name: Configure env
+        run: |
+          echo "CF_API_TOKEN=${{ secrets.CF_API_TOKEN }}" >> $GITHUB_ENV
+          echo "CF_ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }}" >> $GITHUB_ENV
+
+      - name: Deploy Cloudflare Worker
+        working-directory: cf-worker-notify
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_API_TOKEN:        ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID:       ${{ secrets.CF_ACCOUNT_ID }}
+          LINE_NOTIFY_TOKEN:   ${{ secrets.LINE_NOTIFY_TOKEN }}
+        run: |
+if [ -n "${LINE_NOTIFY_TOKEN:-}" ]; then
+            wrangler secret put LINE_NOTIFY_TOKEN --env production <<EOF
+${LINE_NOTIFY_TOKEN}
+EOF
+          fi
+wrangler deploy --env production --account-id "$CF_ACCOUNT_ID" --var BUILD_SHA=${{ github.sha }}
+
+      - name: Show health URL hint
+        run: |
+          echo "デプロイ後は以下を確認:"
+          echo "  curl -sS https://wanstage-worker.${{ secrets.CF_ACCOUNT_ID }}.workers.dev/health  (※custom domain 未設定時の例)"
