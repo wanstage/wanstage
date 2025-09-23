@@ -55,14 +55,14 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/mime-types": "^3.0.1",
-    "@types/node": "^24.4.0",
+    "@types/node": "^24.5.2",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
-    "@typescript-eslint/eslint-plugin": "^8.42.0",
-    "@typescript-eslint/parser": "^8.42.0",
+    "@typescript-eslint/eslint-plugin": "^8.44.1",
+    "@typescript-eslint/parser": "^8.44.1",
     "dotenv": "^17.2.2",
     "drizzle-kit": "^0.31.4",
-    "eslint": "^9.34.0",
+    "eslint": "^9.36.0",
     "eslint-config-prettier": "^9.1.2",
     "eslint-plugin-prettier": "^5.5.4",
     "globals": "^13.24.0",
@@ -131,5 +131,6 @@
   "bugs": {
     "url": "https://github.com/wanstage/wanstage/issues"
   },
-  "homepage": "https://github.com/wanstage/wanstage#readme"
+  "homepage": "https://github.com/wanstage/wanstage#readme",
+  "name": "WANSTAGE"
 }
