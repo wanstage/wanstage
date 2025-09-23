@@ -1,0 +1,7 @@
+version: "1.0"
+service:
+  name: WANSTAGE
+  port: 8080
+  env:
+    - key: NOTION_TOKEN
+    - key: SLACK_BOT_TOKEN
