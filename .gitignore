@@ -38,3 +38,10 @@ autogen_videos/
 *.mp4
 tmp/
 ui.log
+.env
+*.env
+autogen_videos/
+tmp/
+ui.log
+.venv*/
+node_modules/

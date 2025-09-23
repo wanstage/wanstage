@@ -1,0 +1,6 @@
+name = "wan-notify-relay"
+main = "cf-worker-notify/src/index.js"
+compatibility_date = "2024-10-01"[ -f wrangler.toml ] || cat > wrangler.toml <<'TOML'
+name = "wan-notify-relay"
+main = "cf-worker-notify/src/index.js"
+compatibility_date = "2024-10-01"
