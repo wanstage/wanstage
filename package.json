@@ -61,7 +61,7 @@
     "@typescript-eslint/eslint-plugin": "^8.44.1",
     "@typescript-eslint/parser": "^8.44.1",
     "dotenv": "^17.2.2",
-    "drizzle-kit": "^0.31.4",
+    "drizzle-kit": "^0.18.1",
     "eslint": "^9.36.0",
     "eslint-config-prettier": "^9.1.2",
     "eslint-plugin-prettier": "^5.5.4",
@@ -132,5 +132,8 @@
     "url": "https://github.com/wanstage/wanstage/issues"
   },
   "homepage": "https://github.com/wanstage/wanstage#readme",
-  "name": "WANSTAGE"
+  "name": "WANSTAGE",
+  "engines": {
+    "node": "24.8.0"
+  }
 }
