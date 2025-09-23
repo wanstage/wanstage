@@ -1,0 +1,3 @@
+[submodule "wanstage.github.io"]
+	path = wanstage.github.io
+	url = git@github.com:okayoshiyuki/wanstage.github.io.git
