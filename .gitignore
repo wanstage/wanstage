@@ -31,3 +31,10 @@ backup-*.db
 *.bak
 *.bak.*
 package.json.bak
+
+# Auto-generated media & logs
+autogen_videos/
+*.wav
+*.mp4
+tmp/
+ui.log
