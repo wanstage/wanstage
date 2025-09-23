@@ -1,0 +1,74 @@
+mkdir -p ~/WANSTAGE/.github/workflows
+cat > ~/WANSTAGE/.github/workflows/worker-deploy.yml <<'YAML'
+name: Deploy CF Worker
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'cf-worker-notify/**'
+      - '.github/workflows/worker-deploy.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cf-worker-notify
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install wrangler
+        run: npm i -g wrangler@4
+
+      - name: Deploy
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          echo "account_id = \"${CF_ACCOUNT_ID}\"" >> wrangler.account.toml
+          wrangler whoami --quiet || true
+          wrangler deploy
+YAMLname: Deploy CF Worker
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'cf-worker-notify/**'
+      - '.github/workflows/worker-deploy.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cf-worker-notify
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install wrangler
+        run: npm i -g wrangler@4
+
+      - name: Deploy
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          echo "account_id = \"${CF_ACCOUNT_ID}\"" >> wrangler.account.toml
+          wrangler whoami --quiet || true
+          wrangler deploy
