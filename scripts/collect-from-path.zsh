@@ -1,0 +1,1 @@
+../bin/collect-from-path.zsh

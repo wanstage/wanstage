@@ -45,3 +45,5 @@ tmp/
 ui.log
 .venv*/
 node_modules/
+.env
+*.env

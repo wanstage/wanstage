@@ -1,0 +1,4 @@
+opt/homebrew/bin/cwebp
+opt/homebrew/bin/dwebp
+opt/homebrew/bin/ffmpeg
+opt/homebrew/bin/ffprobe
