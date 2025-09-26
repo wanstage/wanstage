@@ -3,11 +3,11 @@ name: wanstage release
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*'                           # タグ push で実行
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to release"
+        description: "Tag to release (e.g. v20250926-rX)"
         required: true
 
 permissions:
@@ -21,109 +21,123 @@ jobs:
         uses: actions/checkout@v4
         with: { fetch-depth: 0 }
 
+      # タグ名を bash 内で決定（式は使わない）
       - name: Determine TAG
         shell: bash
         run: |
           set -euo pipefail
-          echo "[DBG] event=${{ github.event_name }}"
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             TAG="${{ inputs.tag }}"
-            echo "[DBG] use input tag: $TAG"
           else
             TAG="${GITHUB_REF_NAME}"
-            echo "[DBG] use ref tag: $TAG"
           fi
-          [[ -n "$TAG" ]] || { echo "[ERR] TAG empty"; exit 1; }
+          [[ -n "$TAG" ]] || { echo "TAG empty" >&2; exit 1; }
           echo "TAG=$TAG" | tee -a "$GITHUB_ENV"
+          # v20250926-r3 -> 20250926-r3（数字多用の場面で使う用）
           echo "TAG_NO_V=${TAG#v}" | tee -a "$GITHUB_ENV"
 
-      - name: Build minimal artifacts
+      # --- 最低限の成果物（常に作る：フェイルセーフ） ---
+      - name: Build minimal artifacts (fallback)
         shell: bash
         run: |
           set -euo pipefail
-          echo "[DBG] build minimal for $TAG"
           mkdir -p out
-          printf "WANSTAGE release %s\n" "$TAG" > "out/README_${TAG}.txt"
+          printf "WANSTAGE release bundle for %s\n" "${TAG}" > "out/README_${TAG}.txt"
           tar -czf "release_all_${TAG}.tar.gz" -C out .
           (cd out && zip -r "../release_all_${TAG}.zip" . > /dev/null)
           shasum -a 256 "release_all_${TAG}.tar.gz" "release_all_${TAG}.zip" > "SHA256SUMS_${TAG}.txt"
-          echo "[DBG] minimal done"
 
-      - name: Optional pack-by-category
+      # --- pack-by-category の成果を同梱（在れば） ---
+      - name: Optional pack-by-category (merge into final bundle)
         shell: bash
         run: |
           set -euo pipefail
           OUTDIR="release_all_${TAG_NO_V}"
-          echo "[DBG] OUTDIR=$OUTDIR"
           mkdir -p "$OUTDIR"
           if [[ -x ./pack-by-category.zsh && -f ./categories_latest.csv ]]; then
-            echo "[INFO] run pack-by-category"
-            ./pack-by-category.zsh -c ./categories_latest.csv -o "$TAG_NO_V" || echo "[WARN] pack failed"
+            echo "[info] run pack-by-category.zsh -> $OUTDIR"
+            # 既存の簡易スクリプトの I/F に合わせて -o はタグ番号系を渡す
+            ./pack-by-category.zsh -c ./categories_latest.csv -o "${TAG_NO_V}" || echo "[warn] pack failed (ignored)"
           else
-            echo "[INFO] no pack script, skip"
+            echo "[info] pack-by-category not present -> create minimal tree"
+            mkdir -p "$OUTDIR"
           fi
-          printf "WANSTAGE release %s\n" "$TAG" > "$OUTDIR/README_${TAG}.txt"
+
+          # ベースの README を追加（常に）
+          printf "WANSTAGE release bundle for %s\n" "${TAG}" > "$OUTDIR/README_${TAG}.txt"
+
+          # 公開鍵テキストを同梱（あれば）
           if [[ -n "${{ secrets.MINISIGN_PUBKEY }}" ]]; then
             printf '%s\n' "${{ secrets.MINISIGN_PUBKEY }}" > "$OUTDIR/minisign_pubkey.txt"
+          elif [[ -f minisign_pubkey.txt ]]; then
+            cp -a minisign_pubkey.txt "$OUTDIR/"
           fi
+
+          # 最終アーカイブ（pack成果）を別名で作る
           tar -czf "release_packed_${TAG}.tar.gz" -C "$OUTDIR" .
           (cd "$OUTDIR" && zip -r "../release_packed_${TAG}.zip" . > /dev/null)
-          shasum -a 256 "release_packed_${TAG}.tar.gz" "release_packed_${TAG}.zip" >> "SHA256SUMS_${TAG}.txt"
-          echo "[DBG] packed done"
 
+          # 既存の minimal と合わせてハッシュを追記
+          shasum -a 256 "release_packed_${TAG}.tar.gz" "release_packed_${TAG}.zip" >> "SHA256SUMS_${TAG}.txt"
+
+      # --- minisign 署名（任意） ---
+      # 条件: MINISIGN_SECKEY_B64 が設定されている場合のみ
       - name: Install minisign
         if: ${{ secrets.MINISIGN_SECKEY_B64 != '' }}
         run: |
-          echo "[DBG] install minisign"
-          sudo apt-get update -y && sudo apt-get install -y minisign expect
+          set -euo pipefail
+          sudo apt-get update -y
+          sudo apt-get install -y minisign expect
 
       - name: Prepare minisign keys
         if: ${{ secrets.MINISIGN_SECKEY_B64 != '' }}
         run: |
-          echo "[DBG] prepare keys"
+          set -euo pipefail
           mkdir -p "$HOME/.minisign_keys"
           echo "${{ secrets.MINISIGN_SECKEY_B64 }}" | base64 -d > "$HOME/.minisign_keys/minisign_seckey.txt"
           chmod 600 "$HOME/.minisign_keys/minisign_seckey.txt"
+          # 公開鍵はリリース添付にも使えるようファイル化
           if [[ -n "${{ secrets.MINISIGN_PUBKEY }}" ]]; then
             printf '%s\n' "${{ secrets.MINISIGN_PUBKEY }}" > "minisign_pubkey.txt"
           fi
 
-      - name: Sign artifacts
+      - name: Sign artifacts with minisign (supports passphrase or unencrypted key)
         if: ${{ secrets.MINISIGN_SECKEY_B64 != '' }}
         shell: bash
         run: |
           set -euo pipefail
-          echo "[DBG] sign step"
-          sign_one(){
-            f="$1"; s="$f.minisig"; echo "[DBG] $f -> $s"
+          sign_one() {
+            local f="$1"
+            local sig="${f}.minisig"
             if [[ -n "${{ secrets.MINISIGN_PASSPHRASE }}" ]]; then
-              F="$f" S="$s" HOME_DIR="$HOME" MINISIGN_PASSPHRASE='${{ secrets.MINISIGN_PASSPHRASE }}' expect <<EXP
+              # 期待：パスフレーズ付き鍵
+              expect <<'EXP'
 set timeout -1
-spawn minisign -S -s "$env(HOME_DIR)/.minisign_keys/minisign_seckey.txt" -m "$env(F)" -x "$env(S)"
+spawn minisign -S -s "$env(HOME)/.minisign_keys/minisign_seckey.txt" -m "'"$f"'" -x "'"$sig"'"
 expect "Enter passphrase: "
-send -- "$env(MINISIGN_PASSPHRASE)\r"
+send -- "${env(MINISIGN_PASSPHRASE)}\r"
 expect eof
 EXP
             else
-              minisign -S -s "$HOME/.minisign_keys/minisign_seckey.txt" -m "$f" -x "$s"
+              # 期待：パスフレーズ無し鍵
+              minisign -S -s "$HOME/.minisign_keys/minisign_seckey.txt" -m "$f" -x "$sig"
             fi
           }
+          export MINISIGN_PASSPHRASE='${{ secrets.MINISIGN_PASSPHRASE }}'
           for a in \
             "release_all_${TAG}.tar.gz" "release_all_${TAG}.zip" \
             "release_packed_${TAG}.tar.gz" "release_packed_${TAG}.zip" \
             "SHA256SUMS_${TAG}.txt"
           do
-            [[ -f "$a" ]] && sign_one "$a" || echo "[INFO] skip $a"
+            [[ -f "$a" ]] && sign_one "$a" || echo "[info] skip missing $a"
           done
-          echo "[DBG] sign done"
 
-      - name: Create GitHub Release
+      - name: Create GitHub Release (include packed+minimal+sig)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG }}
           name: ${{ env.TAG }}
           generate_release_notes: true
-          fail_on_unmatched_files: false
           files: |
             release_all_${{ env.TAG }}.tar.gz
             release_all_${{ env.TAG }}.zip
