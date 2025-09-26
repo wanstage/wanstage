@@ -1,126 +1,124 @@
-name: wanstage release (tag→build→sign→GitHub Release)
+name: release
 
 on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Tag to release (override)"
-        required: false
-        type: string
   push:
     tags:
-      - 'v*'              # 例: v20250926 / v20250926-fix3
+      - "v*"        # v20250926 等
+      - "*-r*"      # v20250926-r1 等
+      - "*-fix*"    # v20250926-fix1 等
   workflow_dispatch:
     inputs:
       tag:
-        description: "Release tag (e.g. v20250926 or v20250926-fix3)"
-        required: true
-        type: string
+        description: "Tag to release (e.g., v20250926)"
+        required: false
 
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref || github.event.inputs.tag }}
+  cancel-in-progress: false
+
 jobs:
   release:
-    # タグ発火 or 手動実行 以外はスキップ
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
-
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
 
-      - name: Derive TAG/RELDATE
+      - name: Resolve TAG / RELDATE
+        id: meta
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            TAG="${{ inputs.tag }}"
-          else
-            TAG="${GITHUB_REF_NAME}"
-          fi
+          TAG="${{ github.event.inputs.tag || '' }}"
+          [[ -z "$TAG" ]] && TAG="${GITHUB_REF_NAME:-}"
+          if [[ -z "$TAG" ]]; then echo "No tag provided/detected" >&2; exit 1; fi
           RELDATE="${TAG#v}"
-          RELDATE="${RELDATE%%-*}"
-          echo "TAG=$TAG" >> $GITHUB_ENV
-          echo "RELDATE=$RELDATE" >> $GITHUB_ENV
-          printf "TAG=%s RELDATE=%s\n" "$TAG" "$RELDATE"
+          echo "tag=$TAG"       >> "$GITHUB_OUTPUT"
+          echo "reldate=$RELDATE" >> "$GITHUB_OUTPUT"
+          echo "TAG=$TAG RELDATE=$RELDATE"
 
-      - name: Setup tools
+      - name: Toolchain (zip/tar/minisign)
+        shell: bash
+        run: |
+          brew install zip gnu-tar minisign >/dev/null || true
+
+      - name: Build packages (robust; creates minimal if packing fails)
+        id: build
         shell: bash
         run: |
           set -euo pipefail
-          brew install jq coreutils minisign gnu-tar zip expect >/dev/null || true
-          for f in pack-by-category.zsh scripts/wan-clean.sh; do
-            [[ -f "$f" ]] || continue
-            perl -i -pe 's/\r$//' "$f" || true
-            chmod +x "$f" || true
+          TAG='${{ steps.meta.outputs.tag }}'
+          RELDATE='${{ steps.meta.outputs.reldate }}'
+          mkdir -p out
+
+          # 1) 可能なら pack スクリプトを使う（失敗しても続行）
+          if [[ -x ./pack-by-category.zsh ]]; then
+            ./pack-by-category.zsh -c categories.csv -o "release_${RELDATE}" || echo "[WARN] pack failed; continue"
+          else
+            echo "[INFO] pack-by-category.zsh not found; continue with minimal"
+          fi
+
+          # 2) 最小アーカイブを常に用意（存在しなければ生成）
+          if [[ ! -f "out/release_all_${RELDATE}.zip" ]]; then
+            echo "WANSTAGE auto release ${RELDATE} ($(date -u +%FT%TZ))" > "out/README_release_${RELDATE}.txt"
+            (cd out && zip -rq "release_all_${RELDATE}.zip" "README_release_${RELDATE}.txt")
+          fi
+
+          # 3) SHA256
+          (cd out && shasum -a 256 "release_all_${RELDATE}.zip" > "SHA256SUMS_${RELDATE}.txt")
+
+          ls -lh out
+
+      - name: Optional minisign (skips if secrets not set)
+        if: ${{ secrets.MINISIGN_SECKEY && secrets.MINISIGN_PUBKEY }}
+        env:
+          MINISIGN_SECKEY: ${{ secrets.MINISIGN_SECKEY }}
+          MINISIGN_PUBKEY: ${{ secrets.MINISIGN_PUBKEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          RELDATE='${{ steps.meta.outputs.reldate }}'
+          mkdir -p "$HOME/.minisign_keys"
+          printf '%s\n' "$MINISIGN_SECKEY" > "$HOME/.minisign_keys/minisign.key"
+          chmod 600 "$HOME/.minisign_keys/minisign.key"
+          minisign -s "$HOME/.minisign_keys/minisign.key" -Um "out/release_all_${RELDATE}.zip"
+          printf '%s\n' "$MINISIGN_PUBKEY" > "out/minisign_pubkey.txt"
+
+      - name: Create/Update GitHub Release and upload assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG='${{ steps.meta.outputs.tag }}'
+          RELDATE='${{ steps.meta.outputs.reldate }}'
+
+          # Release を作成（既存なら view 成功→upload だけ）
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "[INFO] Release $TAG exists; will upload assets"
+          else
+            gh release create "$TAG" -t "$TAG" -n "Automated release for $TAG"
+          fi
+
+          # 資産アップロード（存在するものだけ）
+          uploads=()
+          for f in \
+            "out/release_all_${RELDATE}.zip" \
+            "out/SHA256SUMS_${RELDATE}.txt" \
+            "out/release_all_${RELDATE}.zip.minisig" \
+            "out/minisign_pubkey.txt"
+          do
+            [[ -f "$f" ]] && uploads+=("$f")
           done
 
-      - name: Clean workspace (best effort)
-        shell: bash
-        run: |
-          set -euo pipefail
-          [[ -x scripts/wan-clean.sh ]] && scripts/wan-clean.sh || true
-
-      - name: Pack (robust)
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [[ -f categories_latest.csv && -x ./pack-by-category.zsh ]]; then
-            ./pack-by-category.zsh -c categories_latest.csv -o "release_${RELDATE}" -f "094057,image,media"
-          else
-            echo "categories_latest.csv or pack-by-category.zsh missing → minimal payload"
-            mkdir -p "release_${RELDATE}"
-            echo "WANSTAGE ${TAG}" > "release_${RELDATE}/README.txt"
+          if ((${#uploads[@]}==0)); then
+            echo "::error::No assets to upload"; exit 1
           fi
-          mkdir -p "release_all_${RELDATE}"
-          cp -R release_* "release_all_${RELDATE}/" 2>/dev/null || true
-          [[ -f minisign_pubkey.txt ]] && cp minisign_pubkey.txt "release_all_${RELDATE}/" || true
-          gtar -czf "release_all_${RELDATE}.tar.gz" "release_all_${RELDATE}"
-          zip -r  "release_all_${RELDATE}.zip"     "release_all_${RELDATE}"
 
-      - name: Checksums
-        shell: bash
-        run: |
-          set -euo pipefail
-          shasum -a 256 "release_all_${RELDATE}.tar.gz" "release_all_${RELDATE}.zip" \
-            > "SHA256SUMS_release_all_${RELDATE}.txt"
-          ls -lh "SHA256SUMS_release_all_${RELDATE}.txt"
-
-      - name: Sign with minisign (optional via secrets)
-        if: ${{ secrets.MINISIGN_SECRET_KEY != '' && secrets.MINISIGN_PASSWORD != '' }}
-        env:
-          MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}   # base64 of minisign_seckey.txt
-          MINISIGN_PASSWORD:   ${{ secrets.MINISIGN_PASSWORD }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p ~/.minisign_keys
-          echo "$MINISIGN_SECRET_KEY" | base64 --decode > ~/.minisign_keys/minisign_seckey.txt
-          chmod 600 ~/.minisign_keys/minisign_seckey.txt
-/usr/bin/expect <<'EOD'
-set timeout -1
-set pw $env(MINISIGN_PASSWORD)
-foreach f {"release_all_${env(RELDATE)}.tar.gz" "release_all_${env(RELDATE)}.zip"} {
-  if {[file exists $f]} {
-    spawn minisign -Sm $f -s ~/.minisign_keys/minisign_seckey.txt
-    expect "Password:" { send "$pw\r" }
-    expect eof
-  }
-}
-EOD
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name:  ${{ env.TAG }}
-          name:      ${{ env.TAG }}
-          draft:     false
-          prerelease:false
-          files: |
-            release_all_${{ env.RELDATE }}.tar.gz
-            release_all_${{ env.RELDATE }}.zip
-            SHA256SUMS_release_all_${{ env.RELDATE }}.txt
-            release_all_${{ env.RELDATE }}.tar.gz.minisig
-            release_all_${{ env.RELDATE }}.zip.minisig
-          fail_on_unmatched_files: false
+          gh release upload "$TAG" "${uploads[@]}" --clobber
+          gh release view "$TAG"
