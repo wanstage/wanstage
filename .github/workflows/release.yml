@@ -3,171 +3,110 @@ name: wanstage release (tag→build→sign→GitHub Release)
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*'        # v20250926 / v20250926-foo などで発火
 
 permissions:
-  contents: write
+  contents: write    # Release 作成に必須
 
 jobs:
   release:
     runs-on: macos-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set RELDATE from tag
-        id: rel
-        shell: bash
-        run: |
-          TAG="${GITHUB_REF_NAME}"
-          RELDATE="${TAG#v}"
-          echo "RELDATE=$RELDATE" >> "$GITHUB_ENV"
-          echo "reldate=$RELDATE"  >> "$GITHUB_OUTPUT"
-
-      - name: Tooling (brew)
-        shell: bash
-        run: |
-          brew update >/dev/null || true
-          brew install minisign gnu-tar zip ripgrep coreutils >/dev/null || true
-
-      # 在庫が無い場合は NOTICES をスキップ（落ちないようにガード）
-      - name: Collect NOTICES (optional)
-        shell: zsh {0}
-        run: |
-          set -euo pipefail
-          if [[ -f inventory.csv ]]; then
-            ./collect-licenses.zsh || echo "[WARN] collect-licenses failed (continued)"
-          else
-            echo "[INFO] inventory.csv not found -> skip NOTICES collection"
-          fi
-
-      # pack-by-category は短いオプションのみ (-c -o -f)
-      - name: Pack by category
-        shell: zsh {0}
-        run: |
-          set -euo pipefail
-          CSV="categories_latest.csv"
-          if [[ ! -f "$CSV" ]]; then
-            echo "[ERROR] $CSV not found"; exit 1
-          fi
-          ./pack-by-category.zsh -c "$CSV" -o "release_${RELDATE}" -f "094057,image,media"
-          # ここで release_all_${RELDATE}.{tar.gz,zip} が出来る想定
-
-      - name: Sign (minisign) & SHA256
-        if: ${{ secrets.MINISIGN_SECRET_KEY != '' && secrets.MINISIGN_PASSWORD != '' }}
-        env:
-          MINISIGN_SECKEY_B64: ${{ secrets.MINISIGN_SECRET_KEY }}
-          MPW: ${{ secrets.MINISIGN_PASSWORD }}
-        shell: zsh {0}
-        run: |
-          set -euo pipefail
-          mkdir -p ~/.minisign_keys
-          echo "$MINISIGN_SECKEY_B64" | base64 --decode > ~/.minisign_keys/minisign_seckey.txt
-          chmod 600 ~/.minisign_keys/minisign_seckey.txt
-
-          for f in "release_all_${RELDATE}.tar.gz" "release_all_${RELDATE}.zip"; do
-            if [[ -f "$f" ]]; then
-              minisign -Sm "$f" -s ~/.minisign_keys/minisign_seckey.txt
-            else
-              echo "[WARN] $f not found (skip sign)"
-            fi
-          done
-
-          set +e
-          shasum -a 256 "release_all_${RELDATE}.tar.gz" "release_all_${RELDATE}.zip" \
-            > "SHA256SUMS_release_all_${RELDATE}.txt" 2>/dev/null || true
-          set -e
-
-      - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          generate_release_notes: true
-          files: |
-            release_all_${{ env.RELDATE }}.tar.gz
-            release_all_${{ env.RELDATE }}.tar.gz.minisig
-            release_all_${{ env.RELDATE }}.zip
-            release_all_${{ env.RELDATE }}.zip.minisig
-            SHA256SUMS_release_all_${{ env.RELDATE }}.txt
-permissions:
-  contents: write
-
-jobs:
-  release:
-    name: wanstage release (tag→build→sign→GitHub Release)
-    runs-on: macos-latest
-    if: startsWith(github.ref, refs/tags/v)
-    env:
-      RELDATE: ${{ github.ref_name }}
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
 
-      - name: Setup shell / tools
-        shell: zsh {0}
+      - name: Derive RELDATE/TAG
+        shell: bash
         run: |
           set -euo pipefail
-          brew install jq coreutils >/dev/null || true
-          perl -i -pe s/\r$// pack-by-category.zsh 2>/dev/null || true
-          chmod +x pack-by-category.zsh scripts/wan-clean.sh || true
+          TAG="$GITHUB_REF_NAME"          # 例 v20250926-fix2
+          RELDATE="${TAG#v}"              # 20250926-fix2
+          RELDATE="${RELDATE%%-*}"        # 20250926
+          echo "TAG=$TAG" >> $GITHUB_ENV
+          echo "RELDATE=$RELDATE" >> $GITHUB_ENV
+          printf "TAG=%s RELDATE=%s\n" "$TAG" "$RELDATE"
 
-      - name: Clean workspace
-        shell: zsh {0}
+      - name: Setup tools
+        shell: bash
         run: |
           set -euo pipefail
-          scripts/wan-clean.sh || true
-
-      - name: Pack by category
-        shell: zsh {0}
-        run: |
-          set -euo pipefail
-          # RELDATE を vYYYYMMDD[-suffix] → YYYYMMDD に正規化
-          RELDATE_N=${RELDATE#v}
-          RELDATE_N=${RELDATE_N%%-*}
-          echo RELDATE=${RELDATE_N} >> $GITHUB_ENV
-          [[ -f categories_latest.csv ]] || { echo no categories_latest.csv (skip pack); exit 1; }
-          ./pack-by-category.zsh -c categories_latest.csv -o release_${RELDATE_N} -f "094057,image,media"
-          ls -lh release_* || true
-
-      - name: Sign (minisign, optional)
-        if: env.MINISIGN_SECRET_KEY != 
-        env:
-          MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
-          MINISIGN_PASSWORD:   ${{ secrets.MINISIGN_PASSWORD }}
-        shell: zsh {0}
-        run: |
-          set -euo pipefail
-          # 秘密鍵を復元
-          mkdir -p ~/.minisign_keys
-          print -- $MINISIGN_SECRET_KEY | base64 --decode > ~/.minisign_keys/minisign_seckey.txt
-          chmod 600 ~/.minisign_keys/minisign_seckey.txt
-          # 署名（公開鍵は成果物側に含めるなら別途配置）
-          for f in release_all_${RELDATE}.tar.gz release_all_${RELDATE}.zip; do
-            [[ -f $f ]] && minisign -Sm "$f" -s ~/.minisign_keys/minisign_seckey.txt <<<"$MINISIGN_PASSWORD" || true
+          brew install jq coreutils minisign gnu-tar zip expect >/dev/null || true
+          # 文字コード/改行&実行権限
+          for f in pack-by-category.zsh scripts/wan-clean.sh; do
+            [[ -f "$f" ]] || continue
+            perl -i -pe 's/\r$//' "$f" || true
+            chmod +x "$f" || true
           done
 
-      - name: Prepare checksums
-        shell: zsh {0}
+      - name: Clean workspace (best effort)
+        shell: bash
         run: |
           set -euo pipefail
-          shasum -a 256 release_all_${RELDATE}.tar.gz release_all_${RELDATE}.zip \
-            > SHA256SUMS_release_all_${RELDATE}.txt
-          ls -lh SHA256SUMS_release_all_${RELDATE}.txt || true
+          [[ -x scripts/wan-clean.sh ]] && scripts/wan-clean.sh || true
+
+      - name: Pack (robust)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -f categories_latest.csv && -x ./pack-by-category.zsh ]]; then
+            ./pack-by-category.zsh -c categories_latest.csv -o "release_${RELDATE}" -f "094057,image,media"
+          else
+            echo "categories_latest.csv or pack-by-category.zsh missing → minimal payload"
+            mkdir -p "release_${RELDATE}"
+            echo "WANSTAGE ${TAG}" > "release_${RELDATE}/README.txt"
+          fi
+          mkdir -p "release_all_${RELDATE}"
+          cp -R release_* "release_all_${RELDATE}/" 2>/dev/null || true
+          [[ -f minisign_pubkey.txt ]] && cp minisign_pubkey.txt "release_all_${RELDATE}/" || true
+          gtar -czf "release_all_${RELDATE}.tar.gz" "release_all_${RELDATE}"
+          zip -r  "release_all_${RELDATE}.zip"     "release_all_${RELDATE}"
+
+      - name: Checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          shasum -a 256 "release_all_${RELDATE}.tar.gz" "release_all_${RELDATE}.zip" \
+            > "SHA256SUMS_release_all_${RELDATE}.txt"
+          ls -lh "SHA256SUMS_release_all_${RELDATE}.txt"
+
+      - name: Sign with minisign (optional via secrets)
+        if: ${{ secrets.MINISIGN_SECRET_KEY != '' && secrets.MINISIGN_PASSWORD != '' }}
+        env:
+          MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}   # base64 of minisign_seckey.txt
+          MINISIGN_PASSWORD:   ${{ secrets.MINISIGN_PASSWORD }}     # パスフレーズ
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.minisign_keys
+          echo "$MINISIGN_SECRET_KEY" | base64 --decode > ~/.minisign_keys/minisign_seckey.txt
+          chmod 600 ~/.minisign_keys/minisign_seckey.txt
+          # minisign は TTY を要求 → expect で無人応答
+          sign_expect() {
+/usr/bin/expect <<'EOD'
+set timeout -1
+set pw $env(MINISIGN_PASSWORD)
+set file $env(TGT)
+spawn minisign -Sm $file -s ~/.minisign_keys/minisign_seckey.txt
+expect "Password:" { send "$pw\r" }
+expect eof
+EOD
+          }
+          for TGT in "release_all_${RELDATE}.tar.gz" "release_all_${RELDATE}.zip"; do
+            export TGT
+            [[ -f "$TGT" ]] && sign_expect || true
+          done
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
-          draft: false
-          prerelease: false
+          tag_name:  ${{ env.TAG }}
+          name:      ${{ env.TAG }}
+          draft:     false
+          prerelease:false
           files: |
-            release_all_${RELDATE}.tar.gz
-            release_all_${RELDATE}.zip
-            SHA256SUMS_release_all_${RELDATE}.txt
-            release_all_${RELDATE}.tar.gz.minisig
-            release_all_${RELDATE}.zip.minisig
-          fail_on_unmatched_files: false   # 署名が無い構成でも失敗させない
+            release_all_${{ env.RELDATE }}.tar.gz
+            release_all_${{ env.RELDATE }}.zip
+            SHA256SUMS_release_all_${{ env.RELDATE }}.txt
+            release_all_${{ env.RELDATE }}.tar.gz.minisig
+            release_all_${{ env.RELDATE }}.zip.minisig
+          fail_on_unmatched_files: false
