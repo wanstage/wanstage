@@ -1,70 +1,62 @@
-name: wanstage release (minimal & robust)
+name: wanstage release (minimal-safe)
 
 on:
   push:
     tags:
-      - 'v*'         # タグ push で自動発火
+      - 'v*'   # タグ push で実行
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to release (e.g. v20250926-r3)"
-        required: false
-        default: ""
+        description: "Tag to release (e.g. v20250926-rX)"
+        required: true
 
 permissions:
-  contents: write    # Release 作成に必要
+  contents: write
 
 jobs:
   release:
     runs-on: ubuntu-latest
-
-    env:
-      # タグ名を決定（タグpush時: github.ref_name、手動時: inputs.tag）
-      TAG: ${{ github.ref_type == 'tag' && github.ref_name || inputs.tag }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Guard: TAG must be set
+      # ここでタグ名を安全に決定（式は使わず bash 内で完結）
+      - name: Determine TAG
         run: |
-          if [ -z "${TAG}" ]; then
-            echo "TAG is empty. Use workflow_dispatch with 'tag' input or push a tag like v2025...." >&2
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG="${{ inputs.tag }}"
+          else
+            # push(tag) のときは GITHUB_REF_NAME にタグ名が入っている
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          if [[ -z "${TAG}" ]]; then
+            echo "TAG is empty" >&2
             exit 1
           fi
-        shell: bash
+          echo "TAG=${TAG}" | tee -a "$GITHUB_ENV"
 
-      # 最小アーティファクト作成（pack-by-category が無くても必ず生成）
       - name: Build minimal artifacts
         run: |
           set -euo pipefail
           mkdir -p out
           printf "WANSTAGE release bundle for %s\n" "${TAG}" > "out/README_${TAG}.txt"
-
           tar -czf "release_all_${TAG}.tar.gz" -C out .
           (cd out && zip -r "../release_all_${TAG}.zip" . > /dev/null)
-
           shasum -a 256 "release_all_${TAG}.tar.gz" "release_all_${TAG}.zip" > "SHA256SUMS_${TAG}.txt"
-        shell: bash
 
-      # （任意）pack-by-category.zsh があれば併せて追加
+      # 任意: pack-by-category があれば追記（無ければ何もしない）
       - name: Optional pack-by-category
         run: |
           set -euo pipefail
-          if [ -x ./pack-by-category.zsh ] && [ -f ./categories_latest.csv ]; then
+          if [[ -x ./pack-by-category.zsh && -f ./categories_latest.csv ]]; then
             echo "[info] run pack-by-category.zsh ..."
-            ./pack-by-category.zsh -c ./categories_latest.csv -o "${TAG#v}" || echo "[warn] pack-by-category failed (ignored)"
-            # できたフォルダを追加入稿（存在すれば）
-            if [ -d "release_all_${TAG#v}" ]; then
-              tar --append -f "release_all_${TAG}.tar" -C "release_all_${TAG#v}" .
-              gzip -f "release_all_${TAG}.tar"
-            fi
+            ./pack-by-category.zsh -c ./categories_latest.csv -o "${TAG#v}" || echo "[warn] pack failed (ignored)"
           else
-            echo "[info] pack-by-category.zsh / categories_latest.csv not found -> skip (minimal release only)"
+            echo "[info] pack-by-category not present -> skip"
           fi
-        shell: bash
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
