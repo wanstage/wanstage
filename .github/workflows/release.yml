@@ -1,6 +1,12 @@
 name: wanstage release (tag→build→sign→GitHub Release)
 
 on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (override)"
+        required: false
+        type: string
   push:
     tags:
       - 'v*'              # 例: v20250926 / v20250926-fix3
