@@ -1,13 +1,13 @@
-name: wanstage release (minimal-safe)
+name: wanstage release
 
 on:
   push:
     tags:
-      - 'v*'   # タグ push で実行
+      - 'v*'
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to release (e.g. v20250926-rX)"
+        description: "Tag to release"
         required: true
 
 permissions:
@@ -19,44 +19,103 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        with: { fetch-depth: 0 }
 
-      # ここでタグ名を安全に決定（式は使わず bash 内で完結）
       - name: Determine TAG
+        shell: bash
         run: |
           set -euo pipefail
+          echo "[DBG] event=${{ github.event_name }}"
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             TAG="${{ inputs.tag }}"
+            echo "[DBG] use input tag: $TAG"
           else
-            # push(tag) のときは GITHUB_REF_NAME にタグ名が入っている
             TAG="${GITHUB_REF_NAME}"
+            echo "[DBG] use ref tag: $TAG"
           fi
-          if [[ -z "${TAG}" ]]; then
-            echo "TAG is empty" >&2
-            exit 1
-          fi
-          echo "TAG=${TAG}" | tee -a "$GITHUB_ENV"
+          [[ -n "$TAG" ]] || { echo "[ERR] TAG empty"; exit 1; }
+          echo "TAG=$TAG" | tee -a "$GITHUB_ENV"
+          echo "TAG_NO_V=${TAG#v}" | tee -a "$GITHUB_ENV"
 
       - name: Build minimal artifacts
+        shell: bash
         run: |
           set -euo pipefail
+          echo "[DBG] build minimal for $TAG"
           mkdir -p out
-          printf "WANSTAGE release bundle for %s\n" "${TAG}" > "out/README_${TAG}.txt"
+          printf "WANSTAGE release %s\n" "$TAG" > "out/README_${TAG}.txt"
           tar -czf "release_all_${TAG}.tar.gz" -C out .
           (cd out && zip -r "../release_all_${TAG}.zip" . > /dev/null)
           shasum -a 256 "release_all_${TAG}.tar.gz" "release_all_${TAG}.zip" > "SHA256SUMS_${TAG}.txt"
+          echo "[DBG] minimal done"
 
-      # 任意: pack-by-category があれば追記（無ければ何もしない）
       - name: Optional pack-by-category
+        shell: bash
         run: |
           set -euo pipefail
+          OUTDIR="release_all_${TAG_NO_V}"
+          echo "[DBG] OUTDIR=$OUTDIR"
+          mkdir -p "$OUTDIR"
           if [[ -x ./pack-by-category.zsh && -f ./categories_latest.csv ]]; then
-            echo "[info] run pack-by-category.zsh ..."
-            ./pack-by-category.zsh -c ./categories_latest.csv -o "${TAG#v}" || echo "[warn] pack failed (ignored)"
+            echo "[INFO] run pack-by-category"
+            ./pack-by-category.zsh -c ./categories_latest.csv -o "$TAG_NO_V" || echo "[WARN] pack failed"
           else
-            echo "[info] pack-by-category not present -> skip"
+            echo "[INFO] no pack script, skip"
           fi
+          printf "WANSTAGE release %s\n" "$TAG" > "$OUTDIR/README_${TAG}.txt"
+          if [[ -n "${{ secrets.MINISIGN_PUBKEY }}" ]]; then
+            printf '%s\n' "${{ secrets.MINISIGN_PUBKEY }}" > "$OUTDIR/minisign_pubkey.txt"
+          fi
+          tar -czf "release_packed_${TAG}.tar.gz" -C "$OUTDIR" .
+          (cd "$OUTDIR" && zip -r "../release_packed_${TAG}.zip" . > /dev/null)
+          shasum -a 256 "release_packed_${TAG}.tar.gz" "release_packed_${TAG}.zip" >> "SHA256SUMS_${TAG}.txt"
+          echo "[DBG] packed done"
+
+      - name: Install minisign
+        if: ${{ secrets.MINISIGN_SECKEY_B64 != '' }}
+        run: |
+          echo "[DBG] install minisign"
+          sudo apt-get update -y && sudo apt-get install -y minisign expect
+
+      - name: Prepare minisign keys
+        if: ${{ secrets.MINISIGN_SECKEY_B64 != '' }}
+        run: |
+          echo "[DBG] prepare keys"
+          mkdir -p "$HOME/.minisign_keys"
+          echo "${{ secrets.MINISIGN_SECKEY_B64 }}" | base64 -d > "$HOME/.minisign_keys/minisign_seckey.txt"
+          chmod 600 "$HOME/.minisign_keys/minisign_seckey.txt"
+          if [[ -n "${{ secrets.MINISIGN_PUBKEY }}" ]]; then
+            printf '%s\n' "${{ secrets.MINISIGN_PUBKEY }}" > "minisign_pubkey.txt"
+          fi
+
+      - name: Sign artifacts
+        if: ${{ secrets.MINISIGN_SECKEY_B64 != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "[DBG] sign step"
+          sign_one(){
+            f="$1"; s="$f.minisig"; echo "[DBG] $f -> $s"
+            if [[ -n "${{ secrets.MINISIGN_PASSPHRASE }}" ]]; then
+              F="$f" S="$s" HOME_DIR="$HOME" MINISIGN_PASSPHRASE='${{ secrets.MINISIGN_PASSPHRASE }}' expect <<EXP
+set timeout -1
+spawn minisign -S -s "$env(HOME_DIR)/.minisign_keys/minisign_seckey.txt" -m "$env(F)" -x "$env(S)"
+expect "Enter passphrase: "
+send -- "$env(MINISIGN_PASSPHRASE)\r"
+expect eof
+EXP
+            else
+              minisign -S -s "$HOME/.minisign_keys/minisign_seckey.txt" -m "$f" -x "$s"
+            fi
+          }
+          for a in \
+            "release_all_${TAG}.tar.gz" "release_all_${TAG}.zip" \
+            "release_packed_${TAG}.tar.gz" "release_packed_${TAG}.zip" \
+            "SHA256SUMS_${TAG}.txt"
+          do
+            [[ -f "$a" ]] && sign_one "$a" || echo "[INFO] skip $a"
+          done
+          echo "[DBG] sign done"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -64,7 +123,16 @@ jobs:
           tag_name: ${{ env.TAG }}
           name: ${{ env.TAG }}
           generate_release_notes: true
+          fail_on_unmatched_files: false
           files: |
-            release_all_*.tar.gz
-            release_all_*.zip
-            SHA256SUMS_*.txt
+            release_all_${{ env.TAG }}.tar.gz
+            release_all_${{ env.TAG }}.zip
+            release_packed_${{ env.TAG }}.tar.gz
+            release_packed_${{ env.TAG }}.zip
+            SHA256SUMS_${{ env.TAG }}.txt
+            release_all_${{ env.TAG }}.tar.gz.minisig
+            release_all_${{ env.TAG }}.zip.minisig
+            release_packed_${{ env.TAG }}.tar.gz.minisig
+            release_packed_${{ env.TAG }}.zip.minisig
+            SHA256SUMS_${{ env.TAG }}.txt.minisig
+            minisign_pubkey.txt
