@@ -1,124 +1,75 @@
-name: release
+name: release (tag → build → upload)
 
 on:
   push:
     tags:
-      - "v*"        # v20250926 等
-      - "*-r*"      # v20250926-r1 等
-      - "*-fix*"    # v20250926-fix1 等
+      - 'v*'
+      - 'V*'
+      - '*-r*'
+      - '*-fix*'
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to release (e.g., v20250926)"
-        required: false
+        description: 'tag name (e.g., v20250926)'
+        required: true
 
 permissions:
-  contents: write
-
-concurrency:
-  group: release-${{ github.ref || github.event.inputs.tag }}
-  cancel-in-progress: false
+  contents: write   # ← Release 作成に必須
 
 jobs:
   release:
-    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
-    runs-on: macos-latest
-    timeout-minutes: 15
+    if: github.ref_type == 'tag' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Resolve TAG / RELDATE
-        id: meta
-        shell: bash
+      - name: Checkout (with tags)
+        uses: actions/checkout@v4
+        with:fetch-depth: 0 fetch-tags: true name: Show context
         run: |
-          set -euo pipefail
-          TAG="${{ github.event.inputs.tag || '' }}"
-          [[ -z "$TAG" ]] && TAG="${GITHUB_REF_NAME:-}"
-          if [[ -z "$TAG" ]]; then echo "No tag provided/detected" >&2; exit 1; fi
-          RELDATE="${TAG#v}"
-          echo "tag=$TAG"       >> "$GITHUB_OUTPUT"
-          echo "reldate=$RELDATE" >> "$GITHUB_OUTPUT"
-          echo "TAG=$TAG RELDATE=$RELDATE"
-
-      - name: Toolchain (zip/tar/minisign)
-        shell: bash
+          echo "event=${{ github.event_name }}"
+          echo "ref=${{ github.ref }}"
+          echo "ref_name=${{ github.ref_name }}"
+          echo "TAG=${TAG}"
+          git tag --list | tail -n +1- name: Build minimal artifacts
         run: |
-          brew install zip gnu-tar minisign >/dev/null || true
-
-      - name: Build packages (robust; creates minimal if packing fails)
-        id: build
-        shell: bash
+          mkdir -p artifacts
+          echo "WANSTAGE minimal artifact for ${TAG} ($(date -u +%FT%TZ))" > artifacts/README_release_${TAG}.txt
+          tar -czf artifacts/release_all_${TAG}.tar.gz -C artifacts README_release_${TAG}.txt
+          ( cd artifacts && zip -q release_all_${TAG}.zip README_release_${TAG}.txt )
+          sha256sum artifacts/* > artifacts/SHA256SUMS_${TAG}.txt
+ - name: Optional minisign
+        if: ${{ secrets.MINISIGN_PUBLIC && (secrets.MINISIGN_SECRET || secrets.MINISIGN_SECRET_BASE64) }}
         run: |
-          set -euo pipefail
-          TAG='${{ steps.meta.outputs.tag }}'
-          RELDATE='${{ steps.meta.outputs.reldate }}'
-          mkdir -p out
-
-          # 1) 可能なら pack スクリプトを使う（失敗しても続行）
-          if [[ -x ./pack-by-category.zsh ]]; then
-            ./pack-by-category.zsh -c categories.csv -o "release_${RELDATE}" || echo "[WARN] pack failed; continue"
-          else
-            echo "[INFO] pack-by-category.zsh not found; continue with minimal"
+          sudo apt-get update && sudo apt-get install -y minisign
+          mkdir -p ~/.minisign_keys
+          if [[ -n "${MINISIGN_SECRET_BASE64:-}" ]]; then
+            echo "$MINISIGN_SECRET_BASE64" | base64 -d > ~/.minisign_keys/minisign_seckey.txt
+          elif [[ -n "${MINISIGN_SECRET:-}" ]]; then
+            printf "%s" "$MINISIGN_SECRET" > ~/.minisign_keys/minisign_seckey.txt
           fi
-
-          # 2) 最小アーカイブを常に用意（存在しなければ生成）
-          if [[ ! -f "out/release_all_${RELDATE}.zip" ]]; then
-            echo "WANSTAGE auto release ${RELDATE} ($(date -u +%FT%TZ))" > "out/README_release_${RELDATE}.txt"
-            (cd out && zip -rq "release_all_${RELDATE}.zip" "README_release_${RELDATE}.txt")
-          fi
-
-          # 3) SHA256
-          (cd out && shasum -a 256 "release_all_${RELDATE}.zip" > "SHA256SUMS_${RELDATE}.txt")
-
-          ls -lh out
-
-      - name: Optional minisign (skips if secrets not set)
-        if: ${{ secrets.MINISIGN_SECKEY && secrets.MINISIGN_PUBKEY }}
+          chmod 600 ~/.minisign_keys/minisign_seckey.txt
+          printf "%s" "$MINISIGN_PUBLIC" > artifacts/minisign_pubkey.txt
+          for f in artifacts/release_all_${TAG}.tar.gz artifacts/release_all_${TAG}.zip; do
+            minisign -Sm "$f" -s ~/.minisign_keys/minisign_seckey.txt -m "$f"
+          done
         env:
-          MINISIGN_SECKEY: ${{ secrets.MINISIGN_SECKEY }}
-          MINISIGN_PUBKEY: ${{ secrets.MINISIGN_PUBKEY }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          RELDATE='${{ steps.meta.outputs.reldate }}'
-          mkdir -p "$HOME/.minisign_keys"
-          printf '%s\n' "$MINISIGN_SECKEY" > "$HOME/.minisign_keys/minisign.key"
-          chmod 600 "$HOME/.minisign_keys/minisign.key"
-          minisign -s "$HOME/.minisign_keys/minisign.key" -Um "out/release_all_${RELDATE}.zip"
-          printf '%s\n' "$MINISIGN_PUBKEY" > "out/minisign_pubkey.txt"
-
-      - name: Create/Update GitHub Release and upload assets
+          MINISIGN_PUBLIC: ${{ secrets.MINISIGN_PUBLIC }}
+          MINISIGN_SECRET: ${{ secrets.MINISIGN_SECRET }}
+          MINISIGN_SECRET_BASE64: ${{ secrets.MINISIGN_SECRET_BASE64 }}
+  - name: Create or update GitHub Release and upload assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
         run: |
           set -euo pipefail
-          TAG='${{ steps.meta.outputs.tag }}'
-          RELDATE='${{ steps.meta.outputs.reldate }}'
-
-          # Release を作成（既存なら view 成功→upload だけ）
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "[INFO] Release $TAG exists; will upload assets"
+          # 既存確認 → 無ければ作成
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            echo "Release ${TAG} already exists."
           else
-            gh release create "$TAG" -t "$TAG" -n "Automated release for $TAG"
-          fi
+            gh release create "${TAG}" --title "${TAG}" --notes "Automated release for ${TAG}"
+          fi   gh release upload "${TAG}" artifacts/* --clobber
 
-          # 資産アップロード（存在するものだけ）
-          uploads=()
-          for f in \
-            "out/release_all_${RELDATE}.zip" \
-            "out/SHA256SUMS_${RELDATE}.txt" \
-            "out/release_all_${RELDATE}.zip.minisig" \
-            "out/minisign_pubkey.txt"
-          do
-            [[ -f "$f" ]] && uploads+=("$f")
-          done
-
-          if ((${#uploads[@]}==0)); then
-            echo "::error::No assets to upload"; exit 1
-          fi
-
-          gh release upload "$TAG" "${uploads[@]}" --clobber
-          gh release view "$TAG"
+      - name: List uploaded assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release view "${TAG}" --json assets,name,tagName,url
