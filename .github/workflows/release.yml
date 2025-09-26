@@ -3,25 +3,38 @@ name: wanstage release (tag→build→sign→GitHub Release)
 on:
   push:
     tags:
-      - 'v*'        # v20250926 / v20250926-foo などで発火
+      - 'v*'              # 例: v20250926 / v20250926-fix3
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v20250926 or v20250926-fix3)"
+        required: true
+        type: string
 
 permissions:
-  contents: write    # Release 作成に必須
+  contents: write
 
 jobs:
   release:
+    # タグ発火 or 手動実行 以外はスキップ
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
+
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
 
-      - name: Derive RELDATE/TAG
+      - name: Derive TAG/RELDATE
         shell: bash
         run: |
           set -euo pipefail
-          TAG="$GITHUB_REF_NAME"          # 例 v20250926-fix2
-          RELDATE="${TAG#v}"              # 20250926-fix2
-          RELDATE="${RELDATE%%-*}"        # 20250926
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          RELDATE="${TAG#v}"
+          RELDATE="${RELDATE%%-*}"
           echo "TAG=$TAG" >> $GITHUB_ENV
           echo "RELDATE=$RELDATE" >> $GITHUB_ENV
           printf "TAG=%s RELDATE=%s\n" "$TAG" "$RELDATE"
@@ -31,7 +44,6 @@ jobs:
         run: |
           set -euo pipefail
           brew install jq coreutils minisign gnu-tar zip expect >/dev/null || true
-          # 文字コード/改行&実行権限
           for f in pack-by-category.zsh scripts/wan-clean.sh; do
             [[ -f "$f" ]] || continue
             perl -i -pe 's/\r$//' "$f" || true
@@ -73,28 +85,24 @@ jobs:
         if: ${{ secrets.MINISIGN_SECRET_KEY != '' && secrets.MINISIGN_PASSWORD != '' }}
         env:
           MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}   # base64 of minisign_seckey.txt
-          MINISIGN_PASSWORD:   ${{ secrets.MINISIGN_PASSWORD }}     # パスフレーズ
+          MINISIGN_PASSWORD:   ${{ secrets.MINISIGN_PASSWORD }}
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p ~/.minisign_keys
           echo "$MINISIGN_SECRET_KEY" | base64 --decode > ~/.minisign_keys/minisign_seckey.txt
           chmod 600 ~/.minisign_keys/minisign_seckey.txt
-          # minisign は TTY を要求 → expect で無人応答
-          sign_expect() {
 /usr/bin/expect <<'EOD'
 set timeout -1
 set pw $env(MINISIGN_PASSWORD)
-set file $env(TGT)
-spawn minisign -Sm $file -s ~/.minisign_keys/minisign_seckey.txt
-expect "Password:" { send "$pw\r" }
-expect eof
+foreach f {"release_all_${env(RELDATE)}.tar.gz" "release_all_${env(RELDATE)}.zip"} {
+  if {[file exists $f]} {
+    spawn minisign -Sm $f -s ~/.minisign_keys/minisign_seckey.txt
+    expect "Password:" { send "$pw\r" }
+    expect eof
+  }
+}
 EOD
-          }
-          for TGT in "release_all_${RELDATE}.tar.gz" "release_all_${RELDATE}.zip"; do
-            export TGT
-            [[ -f "$TGT" ]] && sign_expect || true
-          done
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
