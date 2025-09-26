@@ -1,0 +1,69 @@
+name: wanstage release (minimal-sanity)
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (e.g. v20250926-rX)"
+        required: false
+
+permissions:
+  contents: write
+
+# まずは素朴に：github.ref をそのまま使う
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  sanity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Debug contexts
+        shell: bash
+        run: |
+          set -e
+          echo "::group::github context"
+          echo "event_name=${GITHUB_EVENT_NAME}"
+          echo "ref=${GITHUB_REF}"
+          echo "ref_name=${GITHUB_REF_NAME}"
+          echo "ref_type=${GITHUB_REF_TYPE}"
+          echo "::endgroup::"
+
+      - name: Resolve TAG (dispatch or tag push)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" && -n "${{ github.event.inputs.tag }}" ]]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${GITHUB_REF_NAME:-}"
+          fi
+          [[ -n "${TAG:-}" ]] || { echo "[error] TAG not resolved"; exit 1; }
+          echo "TAG=${TAG}" | tee -a "$GITHUB_ENV"
+          echo "TAG_NO_V=${TAG#v}" | tee -a "$GITHUB_ENV"
+          echo "[info] TAG=$TAG  TAG_NO_V=${TAG#v}"
+
+      - name: Produce minimal files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          printf "WANSTAGE release bundle for %s\n" "${TAG}" > "out/README_${TAG}.txt"
+          tar -czf "release_all_${TAG}.tar.gz" -C out .
+          (cd out && zip -r "../release_all_${TAG}.zip" . >/dev/null)
+          shasum -a 256 "release_all_${TAG}.tar.gz" "release_all_${TAG}.zip" > "SHA256SUMS_${TAG}.txt"
+
+      - name: Upload release (no signatures in sanity)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: ${{ env.TAG }}
+          generate_release_notes: true
+          fail_on_unmatched_files: false
+          files: |
+            release_all_${{ env.TAG }}.tar.gz
+            release_all_${{ env.TAG }}.zip
+            SHA256SUMS_${{ env.TAG }}.txt
