@@ -1,28 +1,30 @@
-name: wanstage release (minimal-sanity)on:
+name: wanstage release
+on:
   push:
     tags: ['v*']
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to release (e.g. v20250926-rX)"
-        required: falsepermissions:
-  contents: write# まずは素朴に：github.ref をそのまま使う
+        description: "Tag to release"
+        required: false
+
+permissions: { contents: write }
 concurrency:
   group: release-${{ github.ref }}
-  cancel-in-progress: falsejobs:
-  sanity:
+  cancel-in-progress: false
+
+jobs:
+  release:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Debug contexts
         shell: bash
         run: |
           set -e
-          echo "::group::github context"
-          echo "event_name=${GITHUB_EVENT_NAME}"
-          echo "ref=${GITHUB_REF}"
-          echo "ref_name=${GITHUB_REF_NAME}"
-          echo "ref_type=${GITHUB_REF_TYPE}"
-          echo "::endgroup::"      - name: Resolve TAG (dispatch or tag push)
+          echo "::group::github"; echo "event=${GITHUB_EVENT_NAME}"; echo "ref=${GITHUB_REF}"; echo "ref_name=${GITHUB_REF_NAME}"; echo "::endgroup::"
+
+      - name: Resolve TAG
         shell: bash
         run: |
           set -euo pipefail
@@ -32,9 +34,10 @@ concurrency:
             TAG="${GITHUB_REF_NAME:-}"
           fi
           [[ -n "${TAG:-}" ]] || { echo "[error] TAG not resolved"; exit 1; }
-          echo "TAG=${TAG}" | tee -a "$GITHUB_ENV"
-          echo "TAG_NO_V=${TAG#v}" | tee -a "$GITHUB_ENV"
-          echo "[info] TAG=$TAG  TAG_NO_V=${TAG#v}"      - name: Produce minimal files
+          echo "TAG=${TAG}"       >> "$GITHUB_ENV"
+          echo "TAG_NO_V=${TAG#v}" >> "$GITHUB_ENV"
+
+      - name: Produce minimal artifacts
         shell: bash
         run: |
           set -euo pipefail
@@ -42,7 +45,9 @@ concurrency:
           printf "WANSTAGE release bundle for %s\n" "${TAG}" > "out/README_${TAG}.txt"
           tar -czf "release_all_${TAG}.tar.gz" -C out .
           (cd out && zip -r "../release_all_${TAG}.zip" . >/dev/null)
-          shasum -a 256 "release_all_${TAG}.tar.gz" "release_all_${TAG}.zip" > "SHA256SUMS_${TAG}.txt"      - name: Upload release (no signatures in sanity)
+          shasum -a 256 "release_all_${TAG}.tar.gz" "release_all_${TAG}.zip" > "SHA256SUMS_${TAG}.txt"
+
+      - name: Upload release (minimal)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG }}
