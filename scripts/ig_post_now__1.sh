@@ -1,3 +1,4 @@
+#!/usr/bin/env zsh
 # 
 mkdir -p ~/WANSTAGE/scripts ~/WANSTAGE/logs
 

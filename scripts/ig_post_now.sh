@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 set -Eeuo pipefail
 create_tmp=""; publish_tmp=""
 log(){ printf '[%s] %s\n' "$(date '+%F %T')" "$*" ; }

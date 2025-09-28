@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 set -e
 echo "[1] python path: $(which python)"
 python -V || true

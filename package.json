@@ -132,11 +132,15 @@
     "url": "https://github.com/wanstage/wanstage/issues"
   },
   "homepage": "https://github.com/wanstage/wanstage#readme",
-  "name": "WANSTAGE",
+  "name": "wanstage",
   "engines": {
     "node": "24.8.0"
   },
   "overrides": {
     "esbuild": "^0.24.4"
+  },
+  "version": "1.0.0",
+  "bin": {
+    "wanstage": "bin/notify.js"
   }
 }

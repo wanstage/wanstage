@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 set -euo pipefail
 
 SCRIPT_TEXT="${1:-WANSTAGEのお知らせです。今日もコツコツやっていきます。}"

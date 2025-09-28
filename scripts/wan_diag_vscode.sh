@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 set -u
 TS="$(date +%Y%m%d_%H%M%S)"; LOGDIR="$HOME/WANSTAGE/logs"; OUT="$LOGDIR/vscode_diag_${TS}.log"; TARGET_DIR="${1:-$PWD}"
 Y='\033[33m'; G='\033[32m'; C='\033[36m'; N='\033[0m'

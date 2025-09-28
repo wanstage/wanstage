@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 set -euo pipefail
 
 # Chrome 拡張の強制導入ポリシーを「最小6本」に差し替える

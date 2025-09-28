@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("WanstageYoutube")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+264e831d2e5bb46dd278a7c5f07f62291361f54b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+04ef37584a1d6d0abcfe5bdef1f9f21ac3967d1e")]
 [assembly: System.Reflection.AssemblyProductAttribute("WanstageYoutube")]
 [assembly: System.Reflection.AssemblyTitleAttribute("WanstageYoutube")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

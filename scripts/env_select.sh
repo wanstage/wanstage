@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 set -euo pipefail
 ENV_NAME="${1:-stg}"
 case "$ENV_NAME" in

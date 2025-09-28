@@ -1,3 +1,4 @@
+#!/usr/bin/env zsh
 set -euo pipefail
 VENV="/Users/okayoshiyuki/WANSTAGE/venv"
 source "$VENV/bin/activate"

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 set -euo pipefail
 ts=$(date "+%Y-%m-%d %H:%M:%S")
 echo "[$ts] WANSTAGE start" | tee -a logs/one_button.log

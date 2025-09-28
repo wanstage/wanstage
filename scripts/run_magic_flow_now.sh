@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 set -euo pipefail
 ROOT="$HOME/WANSTAGE"
 LOGDIR="$ROOT/logs"; mkdir -p "$LOGDIR"
