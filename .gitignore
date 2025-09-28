@@ -47,3 +47,16 @@ ui.log
 node_modules/
 .env
 *.env
+# build / archives / cache examples
+*.zip
+*.tar.gz
+*.cache
+.DS_Store
+# dotnet
+bin/
+obj/
+# node
+node_modules/
+# your generated release outputs:
+release_*/
+release_all_*/
