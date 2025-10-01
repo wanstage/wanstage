@@ -1,0 +1,95 @@
+{
+  "type": "flex",
+  "altText": "WANSTAGE 投稿プレビュー",
+  "contents": {
+    "type": "bubble",
+    "size": "mega",
+    "hero": {
+      "type": "image",
+      "url": "{{ image }}",
+      "size": "full",
+      "aspectRatio": "16:9",
+      "aspectMode": "cover"
+    },
+    "body": {
+      "type": "box",
+      "layout": "vertical",
+      "spacing": "md",
+      "contents": [
+        {
+          "type": "text",
+          "text": "{{ title }}",
+          "wrap": true,
+          "weight": "bold",
+          "size": "lg"
+        },
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "spacing": "sm",
+          "contents": [
+            {
+              "type": "box",
+              "layout": "vertical",
+              "paddingAll": "6px",
+              "cornerRadius": "6px",
+              "backgroundColor": "#EEF2FF",
+              "contents": [
+                { "type": "text", "text": "{{ date }}", "size": "xs", "color": "#3730A3", "weight": "bold" }
+              ]
+            },
+            {
+              "type": "box",
+              "layout": "vertical",
+              "paddingAll": "6px",
+              "cornerRadius": "6px",
+              "backgroundColor": "#ECFDF5",
+              "contents": [
+                { "type": "text", "text": "SLOT #{{ slot }}", "size": "xs", "color": "#065F46", "weight": "bold" }
+              ]
+            }
+          ]
+        },
+        { "type": "text", "text": "{{ body }}", "wrap": true, "size": "sm", "color": "#111827" },
+        { "type": "separator", "margin": "md", "color": "#E5E7EB" },
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "spacing": "sm",
+          "contents": [
+            {
+              "type": "box",
+              "layout": "vertical",
+              "paddingAll": "6px",
+              "cornerRadius": "12px",
+              "backgroundColor": "#F3F4F6",
+              "contents": [
+                { "type": "text", "text": "{{ tags }}", "size": "xs", "color": "#4B5563", "wrap": true }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "footer": {
+      "type": "box",
+      "layout": "horizontal",
+      "spacing": "md",
+      "contents": [
+        {
+          "type": "button",
+          "style": "primary",
+          "height": "sm",
+          "action": { "type": "uri", "label": "Open", "uri": "{{ url }}" }
+        },
+        {
+          "type": "button",
+          "style": "secondary",
+          "height": "sm",
+          "action": { "type": "uri", "label": "Share", "uri": "{{ url }}" }
+        }
+      ]
+    },
+    "styles": { "body": { "separator": false }, "footer": { "separator": true } }
+  }
+}

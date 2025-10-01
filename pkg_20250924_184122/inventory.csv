@@ -1,0 +1,5 @@
+abs_path,format,shebang,is_executable,mode_octal,size_bytes,sha256
+"/opt/homebrew/bin/cwebp",Mach-O binary,"",yes,0411,30,5dbd41c20e3f1305c57f687314a836a7af248e37301b50c0f1be50195159abff
+"/opt/homebrew/bin/dwebp",Mach-O binary,"",yes,0411,30,2e70a812784782bb14705fc30ab9b6a91281855a5ff0e0dccf7bd4f6c362848d
+"/opt/homebrew/bin/ffmpeg",Mach-O binary,"",yes,0411,33,d94d8e7af675f813e0a0faf036ff936d334ceb18daaec3a10a355679994e0311
+"/opt/homebrew/bin/ffprobe",Mach-O binary,"",yes,0411,34,96f53c2099a3f59fc20efb424dd36d5510373f735cf9af50479c2f4d458695af

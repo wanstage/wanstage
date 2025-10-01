@@ -60,3 +60,5 @@ node_modules/
 # your generated release outputs:
 release_*/
 release_all_*/
+.env
+*.env

@@ -1,0 +1,17 @@
+{
+  "name": "ci-dns-edit",
+  "policies": [
+    {
+      "effect": "allow",
+      "resources": {
+        "com.cloudflare.api.account.zone.YOUR_ZONE_ID": "*"
+      },
+      "permission_groups": [
+        { "id": "PERMISSION_ID_FOR_DNS_EDIT" }
+      ]
+    }
+  ],
+  "condition": {
+    "request_ip": { "in": [] }
+  }
+}

@@ -1,6 +1,3 @@
-fastapi
-uvicorn
-requests
-gspread
-google-auth
-# ↑ 運用で使う最小限のみ
+pandas
+python-dateutil
+streamlit
