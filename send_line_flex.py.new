@@ -1,0 +1,2 @@
+# (ここに完全版のファイル本文を丸ごと出力)
+# 例：requests.Session(trust_env=False), 履歴CSV, Slack通知, --date/--slot対応 等
