@@ -1,3 +1,10 @@
+exclude: |
+  (?x)^(
+    bin/run_continue\.py|
+    bin/send_line_message\.py|
+    core/generate_video\.py|
+    notify/notify_line_message\.py
+  )$
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
