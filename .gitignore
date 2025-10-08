@@ -84,3 +84,29 @@ insta-auto/.venv/
 dist/
 build/
 *.log
+# --- WANSTAGE repo hygiene ---
+__pycache__/
+*.pyc
+.DS_Store
+
+# virtual envs
+.venv/
+venv/
+insta-auto/.venv/
+
+# runtime / artifacts
+state/
+videos/
+media/
+public/*.tmp
+*.log
+
+# editors
+.vscode/
+.idea/
+
+# backups / temp
+*~
+*.bak
+*.bak_*
+*.bak-*

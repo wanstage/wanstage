@@ -1,19 +1,27 @@
 import os, json
 from dotenv import load_dotenv
-from google.analytics.data_v1beta import BetaAnalyticsDataClient, RunReportRequest, DateRange, Metric, Dimension
+from google.analytics.data_v1beta import (
+    BetaAnalyticsDataClient,
+    RunReportRequest,
+    DateRange,
+    Metric,
+    Dimension,
+)
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.oauth2.credentials import Credentials
 
 BASE = os.path.expanduser("~/WANSTAGE")
 CLIENT_JSON = os.path.join(BASE, "keys", "ga4-oauth.json")
-TOKEN_PATH  = os.path.join(BASE, "keys", "token-ga4.json")
+TOKEN_PATH = os.path.join(BASE, "keys", "token-ga4.json")
 SCOPES = ["https://www.googleapis.com/auth/analytics.readonly"]
+
 
 def load_pid() -> str:
     load_dotenv(os.path.join(BASE, ".env"))
     pid = os.getenv("GA4_PROPERTY_ID", "").strip()
     assert pid.isdigit(), f"GA4_PROPERTY_ID invalid: {pid!r}"
     return pid
+
 
 def get_creds():
     # 既存トークンがあれば再利用
@@ -28,6 +36,7 @@ def get_creds():
     with open(TOKEN_PATH, "w") as f:
         f.write(creds.to_json())
     return creds
+
 
 def main():
     pid = load_pid()
@@ -44,6 +53,7 @@ def main():
     print("row_count:", resp.row_count)
     for r in resp.rows[:7]:
         print(r.dimension_values[0].value, r.metric_values[0].value)
+
 
 if __name__ == "__main__":
     main()

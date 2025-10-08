@@ -9,4 +9,3 @@ Common causes of this problem include:
 
 1. The "prettier" plugin is not defined in your configuration file.
 2. The "prettier" plugin is not defined within the same configuration object in which the "prettier/prettier" rule is applied.
-

@@ -3,15 +3,17 @@ from google.oauth2.service_account import Credentials
 
 # --- env ---
 SPREADSHEET_ID = os.environ.get("SHEET_ID", "<スプレッドシートID>")
-SHEET_NAME     = os.environ.get("SHEET_NAME", "KPI")
+SHEET_NAME = os.environ.get("SHEET_NAME", "KPI")
 GOOGLE_APPLICATION_CREDENTIALS = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
 SHORTENER_ORIGIN = os.getenv("SHORTENER_ORIGIN", "http://127.0.0.1:8000")
 SHORTENER_ADMIN_TOKEN = os.getenv("SHORTENER_ADMIN_TOKEN", "set-me")
 
 LAST = os.path.expanduser("~/WANSTAGE/logs/last_post.json")
 
+
 def get_clicks(code: str) -> int:
-    if not code: return 0
+    if not code:
+        return 0
     try:
         r = requests.get(
             f"{SHORTENER_ORIGIN}/admin/stats",
@@ -26,11 +28,12 @@ def get_clicks(code: str) -> int:
         print("[kpi] clicks fetch failed:", e)
         return 0
 
+
 def main():
     with open(LAST, encoding="utf-8") as f:
         last = json.load(f)
 
-    ts   = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ts = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     text = last.get("text", "")
     long_url = last.get("long_url", "")
     short_url = last.get("short_url", "")
@@ -47,6 +50,7 @@ def main():
     row = [ts, text, long_url, short_url, code, clicks_total]
     ws.append_row(row, value_input_option="RAW")
     print("[OK] appended:", row)
+
 
 if __name__ == "__main__":
     main()

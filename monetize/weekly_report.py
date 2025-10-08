@@ -1,15 +1,19 @@
 import os, json, datetime as dt, gspread, requests
 from google.oauth2.service_account import Credentials
 
-SHEET_ID   = os.environ["SHEET_ID"]
-SHEET_NAME = os.environ.get("SHEET_NAME","KPI")
-WEBHOOK    = os.environ["SLACK_WEBHOOK_URL"]
+SHEET_ID = os.environ["SHEET_ID"]
+SHEET_NAME = os.environ.get("SHEET_NAME", "KPI")
+WEBHOOK = os.environ["SLACK_WEBHOOK_URL"]
+
 
 def load_rows():
-    scopes=["https://www.googleapis.com/auth/spreadsheets"]
-    creds=Credentials.from_service_account_file(os.environ["GOOGLE_APPLICATION_CREDENTIALS"], scopes=scopes)
-    ws=gspread.authorize(creds).open_by_key(SHEET_ID).worksheet(SHEET_NAME)
+    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+    creds = Credentials.from_service_account_file(
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"], scopes=scopes
+    )
+    ws = gspread.authorize(creds).open_by_key(SHEET_ID).worksheet(SHEET_NAME)
     return ws.get_all_values()  # 1行目ヘッダ想定
+
 
 def parse_rows(rows):
     # ヘッダ: [ts, text, long, short, code, total, byDayJson]
@@ -21,25 +25,27 @@ def parse_rows(rows):
     by_campaign = {}  # utm_campaign -> clicks
 
     for r in data:
-        if len(r) < 7: continue
+        if len(r) < 7:
+            continue
         ts, text, long_url, short_url, code, total, byday = r[:7]
         # 週次フィルタ（日時列はログ作成時刻、緩めに当週相当で集計）
         try:
             t = dt.datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
-        except: 
+        except:
             continue
-        if t < since: 
+        if t < since:
             continue
 
         clicks = int(total or 0)
         w_total += clicks
-        top.append((clicks, short_url, (text or "")[:60].replace("\n"," ")))
+        top.append((clicks, short_url, (text or "")[:60].replace("\n", " ")))
 
         # utm_campaign 集計（簡易抽出）
         camp = ""
         if "utm_campaign=" in (long_url or ""):
             try:
                 from urllib.parse import urlparse, parse_qs
+
                 qs = parse_qs(urlparse(long_url).query)
                 camp = (qs.get("utm_campaign") or [""])[0]
             except:
@@ -49,6 +55,7 @@ def parse_rows(rows):
     top = sorted(top, reverse=True)[:5]
     camp_sorted = sorted(by_campaign.items(), key=lambda x: x[1], reverse=True)
     return w_total, top, camp_sorted
+
 
 def post_to_slack(total, top, camp_sorted):
     lines = []
@@ -66,10 +73,12 @@ def post_to_slack(total, top, camp_sorted):
     r.raise_for_status()
     print("[OK] posted weekly report")
 
+
 def main():
     rows = load_rows()
     total, top, camp_sorted = parse_rows(rows)
     post_to_slack(total, top, camp_sorted)
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     main()

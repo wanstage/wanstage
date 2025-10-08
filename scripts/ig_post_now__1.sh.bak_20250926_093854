@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# 
+#
 mkdir -p ~/WANSTAGE/scripts ~/WANSTAGE/logs
 
 # ig_post_now.sh Instagram Graph API1
@@ -107,5 +107,3 @@ printf '[%s] container=%s post=%s\n' "$(ts)" "$cid" "$pid"
 SH
 
 chmod +x ~/WANSTAGE/scripts/ig_post_now.sh
-
-

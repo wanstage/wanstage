@@ -6,16 +6,20 @@ LOGS = os.path.expanduser("~/WANSTAGE/logs")
 os.makedirs(LOGS, exist_ok=True)
 LAST = os.path.join(LOGS, "last_post.json")
 
+
 def add_utm(url: str) -> str:
     pr = up.urlparse(url)
     qs = dict(up.parse_qsl(pr.query, keep_blank_values=True))
     if not any(k.startswith("utm_") for k in qs):
-        qs.update({
-            "utm_source": "wanstage",
-            "utm_medium": "social",
-            "utm_campaign": time.strftime("post%Y%m%d"),
-        })
+        qs.update(
+            {
+                "utm_source": "wanstage",
+                "utm_medium": "social",
+                "utm_campaign": time.strftime("post%Y%m%d"),
+            }
+        )
     return up.urlunparse(pr._replace(query=up.urlencode(qs)))
+
 
 def shorten_url(long_url: str) -> tuple[str, str]:
     r = requests.post(
@@ -27,6 +31,7 @@ def shorten_url(long_url: str) -> tuple[str, str]:
     r.raise_for_status()
     d = r.json()
     return d["code"], d.get("link") or d.get("shortUrl")
+
 
 def main():
     # 例: 既存生成済み本文
@@ -53,6 +58,7 @@ def main():
 
     print("[OK] wrote", LAST)
     print(post_text)
+
 
 if __name__ == "__main__":
     main()

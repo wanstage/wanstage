@@ -1,6 +1,6 @@
 ## 同意と利用ポリシー
 
-本ツールは **Google OAuth 2.0** を利用して YouTube Data API にアクセスします。  
+本ツールは **Google OAuth 2.0** を利用して YouTube Data API にアクセスします。
 利用者は以下に同意した上で本ツールを実行してください：
 
 - アクセス権限は `youtube.upload` のみに限定されます

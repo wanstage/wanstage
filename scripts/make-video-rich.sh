@@ -29,7 +29,7 @@ DUR=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrapper
 cat > /tmp/subs.srt <<SRT
 1
 00:00:00,000 --> $(python - <<'PY'
-d=float(open(0).read()); 
+d=float(open(0).read());
 h=int(d//3600); m=int((d%3600)//60); s=int(d%60); ms=int((d-int(d))*1000)
 print(f"{h:02d}:{m:02d}:{s:02d},{ms:03d}")
 PY <<< "$DUR")

@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# 
+#
 mkdir -p ~/WANSTAGE/scripts ~/WANSTAGE/logs
 
 # ig_post_now.sh Instagram Graph API1

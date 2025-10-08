@@ -15,7 +15,7 @@ if not cred or not os.path.isfile(cred):
 
 client = BetaAnalyticsDataClient()
 date_range = DateRange(start_date=f"{days}daysAgo", end_date="today")
-metrics = [Metric(name=m) for m in ("activeUsers","newUsers","sessions","screenPageViews")]
+metrics = [Metric(name=m) for m in ("activeUsers", "newUsers", "sessions", "screenPageViews")]
 req = RunReportRequest(property=f"properties/{prop}", date_ranges=[date_range], metrics=metrics)
 res = client.run_report(req)
 

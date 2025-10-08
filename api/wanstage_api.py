@@ -6,7 +6,6 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 
 
-
 # ---- auto-added CORS & headers ----
 app.add_middleware(
     CORSMiddleware,
@@ -14,14 +13,14 @@ app.add_middleware(
         "https://exactly-walnut-southwest-equation.trycloudflare.com",
         "http://0.0.0.0:8502",
         "http://localhost:8502",
-        'https://race-arthur-groundwater-ringtones.trycloudflare.com',
-
+        "https://race-arthur-groundwater-ringtones.trycloudflare.com",
     ],
     allow_origin_regex=r"https://[a-z0-9-]+\.trycloudflare\.com",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 async def add_security_headers(request, call_next):
     resp: Response = await call_next(request)
@@ -31,8 +30,10 @@ async def add_security_headers(request, call_next):
     resp.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
     return resp
 
+
 app.add_middleware(BaseHTTPMiddleware, dispatch=add_security_headers)
 # ---- /auto-added ----
+
 
 @app.get("/")
 async def root():

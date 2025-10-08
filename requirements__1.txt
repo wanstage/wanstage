@@ -2,4 +2,3 @@ openai
 requests
 Pillow
 python-dotenv
-
