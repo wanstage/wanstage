@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+streamlit
+line-bot-sdk
+moviepy
+opencv-python-headless
+numpy
+pillow
+tqdm
+requests

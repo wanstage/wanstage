@@ -1,0 +1,7 @@
+utm:
+  source: ig
+  medium: social
+  campaign: wanstage-default
+links:
+  default: https://example.com
+  pet_taxi: https://example.com/pet-taxi
