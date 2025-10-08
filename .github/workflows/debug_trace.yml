@@ -16,7 +16,6 @@ jobs:
     env:
       GIT_LFS_SKIP_SMUDGE: "1"
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-
     steps:
       - name: Checkout (skip LFS)
         uses: actions/checkout@v4
@@ -54,7 +53,8 @@ jobs:
       - name: Slack notification (only when webhook is set)
         if: ${{ always() && env.SLACK_WEBHOOK != '' }}
         run: |
-          st="✅ 成功"; [ "${{ job.status }}" != "success" ] && st="❌ 失敗"
+          st="✅ 成功"
+          [ "${{ job.status }}" != "success" ] && st="❌ 失敗"
           set +H 2>/dev/null || true
           printf '{"text":"[Debug Trace CI] %s\nrepo: %s\nrun: %s"}' \
             "$st" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" \
