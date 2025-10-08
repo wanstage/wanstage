@@ -62,3 +62,25 @@ release_*/
 release_all_*/
 .env
 *.env
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.python-version
+
+# Virtual envs
+.venv/
+venv/
+insta-auto/.venv/
+
+# OS / Editor
+.DS_Store
+.vscode/
+.idea/
+
+# Build / Cache
+dist/
+build/
+*.log
