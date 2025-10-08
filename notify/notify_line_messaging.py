@@ -4,15 +4,19 @@ import os, json, pathlib
 BASE = os.path.expanduser("~/WANSTAGE")
 ENV_PATH = os.path.join(BASE, ".env")
 
+
 def load_env_file():
-    if not os.path.exists(ENV_PATH): return {}
+    if not os.path.exists(ENV_PATH):
+        return {}
     out = {}
     for line in pathlib.Path(ENV_PATH).read_text(encoding="utf-8").splitlines():
         s = line.strip()
-        if not s or s.startswith("#") or "=" not in s: continue
+        if not s or s.startswith("#") or "=" not in s:
+            continue
         k, v = s.split("=", 1)
         out[k.strip()] = v.strip().strip("'").strip('"')
     return out
+
 
 def send_line(msg: str):
     # 1) 環境変数を最優先
@@ -22,8 +26,8 @@ def send_line(msg: str):
     # 2) 無ければ .env を読む
     if not token or not to_user:
         envf = load_env_file()
-        token = token or envf.get("LINE_CHANNEL_ACCESS_TOKEN","").strip()
-        to_user = to_user or envf.get("LINE_TO_USER","").strip()
+        token = token or envf.get("LINE_CHANNEL_ACCESS_TOKEN", "").strip()
+        to_user = to_user or envf.get("LINE_TO_USER", "").strip()
 
     debug = {
         "source": "env+file",
@@ -50,6 +54,7 @@ def send_line(msg: str):
         return (r.status_code == 200), f"LINE status={r.status_code} body={r.text[:160]}"
     except Exception as e:
         return False, f"LINE err={e}"
+
 
 if __name__ == "__main__":
     ok, log = send_line("test")

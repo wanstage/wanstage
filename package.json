@@ -5,7 +5,7 @@
     "build": "tsc && mkdir -p dist/public && rsync -a public/ dist/public/ || true",
     "start": "node dist/index.js",
     "check": "tsc --noEmit",
-    "lint": "eslint .",
+    "lint": "eslint src --ext .ts,.tsx,.js --report-unused-disable-directives",
     "format": "prettier -w \"src/**/*.{ts,tsx,js,json,md,yml,yaml}\"",
     "prepare": "husky install",
     "fix": "eslint . --fix",

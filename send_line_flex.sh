@@ -13,6 +13,7 @@ ROOT = pathlib.Path(__file__).resolve().parent
 ENV = ROOT / ".env"
 TEMPLATE = ROOT / "templates/flex_post.json"
 
+
 def load_env(env_path: pathlib.Path):
     if not env_path.exists():
         sys.exit(f".env not found: {env_path}")
@@ -21,9 +22,10 @@ def load_env(env_path: pathlib.Path):
         if not line or line.startswith("#") or "=" not in line:
             continue
         k, v = line.split("=", 1)
-        v = v.split('#', 1)[0].strip()
+        v = v.split("#", 1)[0].strip()
         v = v.split(None, 1)[0] if v else v
         os.environ[k.strip()] = v
+
 
 def must_env(name: str) -> str:
     v = os.environ.get(name, "")
@@ -36,6 +38,7 @@ def must_env(name: str) -> str:
         sys.exit(f"ENV {name} must be ASCII only")
     return v
 
+
 def render_flex(ctx: dict) -> dict:
     # テンプレがあれば使う。無ければ簡易 fallback テキスト
     if not TEMPLATE.exists():
@@ -44,12 +47,13 @@ def render_flex(ctx: dict) -> dict:
     raw = TEMPLATE.read_text(encoding="utf-8")
     # すごく単純な置換（{{ key }}）
     for k, v in ctx.items():
-        raw = raw.replace("{{ "+k+" }}", str(v))
+        raw = raw.replace("{{ " + k + " }}", str(v))
     try:
         return json.loads(raw)
     except json.JSONDecodeError as e:
         # テンプレが壊れていたらテキストにフォールバック
         return {"type": "text", "text": f"{ctx['title']}\n{ctx['body']}"}
+
 
 def post_line_push(token: str, payload: dict) -> requests.Response:
     s = requests.Session()
@@ -59,8 +63,8 @@ def post_line_push(token: str, payload: dict) -> requests.Response:
         "Content-Type": "application/json",
     }
     data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-    return s.post("https://api.line.me/v2/bot/message/push",
-                  headers=headers, data=data, timeout=15)
+    return s.post("https://api.line.me/v2/bot/message/push", headers=headers, data=data, timeout=15)
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -94,6 +98,7 @@ def main():
     print("STATUS", r.status_code, text)
     # 成否で終了コードを分ける（自動実行用）
     sys.exit(0 if 200 <= r.status_code < 300 else 1)
+
 
 if __name__ == "__main__":
     main()

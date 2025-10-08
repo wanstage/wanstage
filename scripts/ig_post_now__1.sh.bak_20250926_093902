@@ -107,5 +107,3 @@ printf '[%s] container=%s post=%s\n' "$(ts)" "$cid" "$pid"
 SH
 
 chmod +x ~/WANSTAGE/scripts/ig_post_now.sh
-
-

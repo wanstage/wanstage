@@ -7,9 +7,11 @@ LOGDIR = ROOT / "logs"
 LOGDIR.mkdir(parents=True, exist_ok=True)
 HISTCSV = LOGDIR / "lineflex_history.csv"
 
+
 def ensure_csv_header(p: pathlib.Path):
     if not p.exists():
         p.write_text("timestamp,date,slot,title,status,message_id,error\n", encoding="utf-8")
+
 
 def post_slack(text: str):
     url = os.environ.get("SLACK_WEBHOOK", "")
@@ -23,17 +25,23 @@ def post_slack(text: str):
     except Exception:
         pass  # 通知失敗は致命的でない
 
+
 def already_sent_ok(date_str: str, slot: int) -> bool:
     if not HISTCSV.exists():
         return False
     try:
         with HISTCSV.open(encoding="utf-8") as f:
             for r in csv.DictReader(f):
-                if r.get("date")==date_str and int(r.get("slot",0))==slot and r.get("status","").startswith("OK"):
+                if (
+                    r.get("date") == date_str
+                    and int(r.get("slot", 0)) == slot
+                    and r.get("status", "").startswith("OK")
+                ):
                     return True
     except Exception:
         pass
     return False
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -54,7 +62,7 @@ def main():
     ensure_csv_header(HISTCSV)
 
     # send_line_flex.py を実行
-    cmd = [sys.executable, str(ROOT/"send_line_flex.py"), "--slot", str(args.slot)]
+    cmd = [sys.executable, str(ROOT / "send_line_flex.py"), "--slot", str(args.slot)]
     if args.date:
         cmd += ["--date", date_str]
     # （send_line_flex.py は --force を受け取っても動作変わらないが将来拡張に備えて透過）
@@ -83,7 +91,7 @@ def main():
         try:
             j = json.loads(body)
             # push API の応答形式に合わせて掘る
-            message_id = ((j.get("sentMessages") or [{}])[0]).get("id","")
+            message_id = ((j.get("sentMessages") or [{}])[0]).get("id", "")
         except Exception:
             message_id = ""
 
@@ -107,6 +115,7 @@ def main():
     post_slack(f"LINE Flex送信 {status} | {date_str} #{args.slot} | {title_for_log}")
 
     return 0 if ok else 1
+
 
 if __name__ == "__main__":
     sys.exit(main())
