@@ -1,0 +1,50 @@
+name: Debug Trace CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  debug-trace:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup environment
+        run: |
+          npm ci || npm install
+          pipx install pre-commit || true
+
+      - name: Run debug trace
+        id: trace
+        continue-on-error: true
+        run: |
+          chmod +x scripts/run_debug_trace.sh
+          ./scripts/run_debug_trace.sh
+
+      - name: Upload trace logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: trace-logs
+          path: logs/trace_log_*.log
+
+      - name: Slack notification
+        if: always()
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          result="✅ 成功"
+          if [ "${{ steps.trace.outcome }}" != "success" ]; then
+            result="❌ 失敗"
+          fi
+          logname=$(ls logs/trace_log_*.log | tail -n 1 || echo "no-log")
+          curl -X POST -H 'Content-Type: application/json' \
+            --data "{\"text\":\"[WANSTAGE Debug Trace] ${result}\\nブランチ: ${GITHUB_REF}\\nコミット: ${GITHUB_SHA}\\nログ: ${logname}\"}" \
+            "${SLACK_WEBHOOK}"
