@@ -2,28 +2,46 @@ name: Debug Trace CI
 
 on:
   workflow_dispatch:
+    inputs:
+      include_lfs:
+        description: "LFS objects to fetch (comma-separated globs)"
+        required: false
+        default: ""
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   debug-trace:
     runs-on: ubuntu-latest
+    env:
+      GIT_LFS_SKIP_SMUDGE: "1"
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
     steps:
-      - name: Checkout repo
+      - name: Checkout (skip LFS)
         uses: actions/checkout@v4
         with:
-          lfs: true
+          fetch-depth: 0
+          lfs: false
 
-      - name: Setup environment
+      - name: Selective LFS fetch (only if requested)
+        if: ${{ github.event.inputs.include_lfs != '' }}
         run: |
-          npm ci || npm install
+          git lfs install --skip-smudge
+          git lfs fetch --include="${{ github.event.inputs.include_lfs }}" --exclude=""
+          git lfs checkout || true
+          git lfs fsck || true
+
+      - name: Tool setup
+        run: |
+          npm ci || npm i
           pipx install pre-commit || true
 
       - name: Run debug trace
         id: trace
         continue-on-error: true
         run: |
+          mkdir -p logs
           chmod +x scripts/run_debug_trace.sh
           ./scripts/run_debug_trace.sh
 
@@ -33,18 +51,12 @@ jobs:
           name: trace-logs
           path: logs/trace_log_*.log
 
-      - name: Slack notification
-        if: always()
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          GITHUB_REF: ${{ github.ref }}
-          GITHUB_SHA: ${{ github.sha }}
+      - name: Slack notification (only when webhook is set)
+        if: ${{ always() && env.SLACK_WEBHOOK != '' }}
         run: |
-          result="✅ 成功"
-          if [ "${{ steps.trace.outcome }}" != "success" ]; then
-            result="❌ 失敗"
-          fi
-          logname=$(ls logs/trace_log_*.log | tail -n 1 || echo "no-log")
-          curl -X POST -H 'Content-Type: application/json' \
-            --data "{\"text\":\"[WANSTAGE Debug Trace] ${result}\\nブランチ: ${GITHUB_REF}\\nコミット: ${GITHUB_SHA}\\nログ: ${logname}\"}" \
-            "${SLACK_WEBHOOK}"
+          st="✅ 成功"; [ "${{ job.status }}" != "success" ] && st="❌ 失敗"
+          set +H 2>/dev/null || true
+          printf '{"text":"[Debug Trace CI] %s\nrepo: %s\nrun: %s"}' \
+            "$st" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" \
+          | curl -sS -H 'Content-Type: application/json' -d @- "$SLACK_WEBHOOK" \
+          || echo "[WARN] slack post failed"
