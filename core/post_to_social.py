@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-import json, sys
+import json
+import sys
 
 if len(sys.argv) < 2:
     print("usage: post_to_social.py <json>", file=sys.stderr)

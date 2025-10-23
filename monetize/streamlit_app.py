@@ -1,4 +1,9 @@
-import sqlite3, os, pandas as pd, matplotlib.pyplot as plt, streamlit as st
+import os
+import sqlite3
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import streamlit as st
 
 DB = os.path.join(os.path.expanduser("~/WANSTAGE"), "data", "short.db")
 st.set_page_config(page_title="WANSTAGE Dashboard", layout="wide")

@@ -1,0 +1,28 @@
+# --- Python / Node 環境 ---
+.venv*/
+__pycache__/
+*.pyc
+node_modules/
+npm-cache/
+.pnpm-store/
+
+# --- キャッシュ系 ---
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# --- Git / IDE / OS ---
+.git/
+.gitignore
+.DS_Store
+.idea/
+.vscode/
+Thumbs.db
+Icon?
+
+# --- ログ・生成物（必要に応じ）---
+*.log
+logs/*
+out/videos/*
+out/tmp/*

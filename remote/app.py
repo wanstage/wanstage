@@ -1,7 +1,12 @@
-import os, hmac, hashlib, time, subprocess
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import PlainTextResponse
+import hashlib
+import hmac
+import os
+import subprocess
+import time
+
 from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import PlainTextResponse
 
 load_dotenv()
 SIGNING_SECRET = (os.getenv("SLACK_SIGNING_SECRET") or "").encode()
@@ -9,7 +14,7 @@ PORT = int(os.getenv("PORT", "8088"))
 ROOT = os.getenv("ROOT_DIR") or os.path.expanduser("~/WANSTAGE")
 
 CMD_MAP = {
-    "post": os.getenv("CMD_POST", f"{ROOT}/full_auto_post_flow.sh"),
+    # [DISABLED by script]     "post": os.getenv("CMD_POST", f"{ROOT}/full_auto_post_flow.sh"),
     "flex": os.getenv("CMD_FLEX", f"{ROOT}/wanstage_flex_notify_and_dbgen.sh"),
 }
 

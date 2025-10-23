@@ -1,4 +1,8 @@
-import os, json, datetime as dt, gspread, requests
+import datetime as dt
+import os
+
+import gspread
+import requests
 from google.oauth2.service_account import Credentials
 
 SHEET_ID = os.environ["SHEET_ID"]
@@ -31,7 +35,7 @@ def parse_rows(rows):
         # 週次フィルタ（日時列はログ作成時刻、緩めに当週相当で集計）
         try:
             t = dt.datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
-        except:
+        except Exception:
             continue
         if t < since:
             continue
@@ -44,11 +48,11 @@ def parse_rows(rows):
         camp = ""
         if "utm_campaign=" in (long_url or ""):
             try:
-                from urllib.parse import urlparse, parse_qs
+                from urllib.parse import parse_qs, urlparse
 
                 qs = parse_qs(urlparse(long_url).query)
                 camp = (qs.get("utm_campaign") or [""])[0]
-            except:
+            except Exception:
                 pass
         by_campaign[camp] = by_campaign.get(camp, 0) + clicks
 

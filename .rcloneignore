@@ -1,0 +1,12 @@
+# venv / build / cache
+**/.venv/**
+**/.venv*/**
+.venv*/
+.venv312/**
+**/__pycache__/**
+**/*.pyc
+# state類
+state/**
+state_original/**
+# logs大容量は任意で
+# logs/**

@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-import os, argparse, glob
+import argparse
+import glob
+import os
+
 from moviepy.editor import ImageClip, concatenate_videoclips
 
 

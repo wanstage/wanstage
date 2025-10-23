@@ -1,5 +1,19 @@
+import json
+
 #!/usr/bin/env python3
-import os, sys, json, pathlib
+import os
+import pathlib
+import sys
+
+from notify_line_messaging import send_line
+from notify_slack import send_slack
+
+# moved: from notify_line_messaging import send_line
+# moved: from notify_slack import send_slack
+
+# moved: from notify_line_messaging import send_line
+# moved: from notify_slack import send_slack
+
 
 # --- ensure local imports ---
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -29,8 +43,8 @@ for k in ("LINE_CHANNEL_ACCESS_TOKEN", "LINE_TO_USER", "SLACK_WEBHOOK_URL"):
     if envf.get(k) and not os.getenv(k):
         os.environ[k] = envf[k]
 
-from notify_line_messaging import send_line
-from notify_slack import send_slack
+# moved to top: from notify_line_messaging import send_line
+# moved to top: from notify_slack import send_slack
 
 
 def main():

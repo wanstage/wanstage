@@ -21,12 +21,12 @@ PY
 done
 
 # 実行フロー
-if [ -x scripts/full_auto_post_flow.sh ]; then
+# [DISABLED by script] if [ -x scripts/full_auto_post_flow.sh ]; then
   echo "[wan-post] run flow"
-  echo "[RUN] full_auto_post_flow.sh"
-  ./scripts/full_auto_post_flow.sh
+# [DISABLED by script]   echo "[RUN] full_auto_post_flow.sh"
+# [DISABLED by script]   ./scripts/full_auto_post_flow.sh
 elif [ -f analytics/update_post_log.py ]; then
   "$PY" analytics/update_post_log.py || true
 else
-  echo "[wan-post] no runnable flow found (scripts/full_auto_post_flow.sh or analytics/update_post_log.py)."
+# [DISABLED by script]   echo "[wan-post] no runnable flow found (scripts/full_auto_post_flow.sh or analytics/update_post_log.py)."
 fi

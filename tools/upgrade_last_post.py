@@ -1,4 +1,11 @@
-import os, re, json, time, urllib.parse, requests, sys, pathlib
+import json
+import os
+import pathlib
+import re
+import time
+import urllib.parse
+
+import requests
 
 P = os.path.expanduser("~/WANSTAGE/logs/last_post.json")
 ORIGIN = os.getenv("SHORTENER_ORIGIN", "http://127.0.0.1:8000")
@@ -80,7 +87,10 @@ def main():
     tmp = P + ".tmp"
     json.dump(j, open(tmp, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
     os.replace(tmp, P)
-    print("[upgrade] ok:", {"short_url": j.get("short_url"), "short_code": j.get("short_code")})
+    print(
+        "[upgrade] ok:",
+        {"short_url": j.get("short_url"), "short_code": j.get("short_code")},
+    )
 
 
 if __name__ == "__main__":

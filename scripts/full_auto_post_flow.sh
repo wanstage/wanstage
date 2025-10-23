@@ -1,5 +1,12 @@
-#!/usr/bin/env bash
-set -euo pipefail
-ROOT="$HOME/WANSTAGE"; LOG="$ROOT/logs"; mkdir -p "$LOG"
-echo "[stub] full_auto_post_flow executed $(date '+%F %T')" >> "$LOG/full_auto.log"
-echo '{"id":"stub","ts":"'"$(date -u +%FT%TZ)"'","caption":"stub"}' > "$LOG/last_post.json"
+#!/bin/zsh
+set -eu
+BASE="$HOME/WANSTAGE"
+source "$BASE/.venv/bin/activate"
+set -a; source "$BASE/.env"; set +a
+
+echo "=== 🚀 Auto Post Start $(date) ==="
+python3 "$BASE/core/generate_post_from_prompt.py"
+python3 "$BASE/core/post_to_instagram.py" || true
+python3 "$BASE/notify/notify_slack_message.py" "✅ 投稿完了: $(date '+%H:%M')" || true
+python3 "$BASE/notify/notify_line_message.py" "✅ 投稿完了: $(date '+%H:%M')" || true
+echo "=== ✅ 完了 ==="

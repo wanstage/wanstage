@@ -1,16 +1,11 @@
-#!/usr/bin/env bash
-set -euo pipefail
-NAME="$(basename "$0")"
-CANDIDATES=(
-  "./scripts/$NAME"
-  "./$NAME"
-  "./tools/$NAME"
-)
-for f in "${CANDIDATES[@]}"; do
-  if [ -f "$f" ]; then
-    exec "$f" "$@"
-  fi
-done
-echo "[WANSTAGE] '$NAME' はまだ実装/配置されていません。"
-echo "  置き場所候補: scripts/$NAME  または  tools/$NAME"
-exit 127
+#!/bin/zsh
+# --- WANSTAGE ONE BUTTON: 無料構成 自動投稿一括実行 ---
+set -eu
+set -a
+. "$HOME/WANSTAGE/.env"
+set +a
+
+echo "=== 🚀 WANSTAGE_ONE_BUTTON start ==="
+"$HOME/WANSTAGE/core/generate_post_from_prompt.py" || true
+"$HOME/WANSTAGE/bin/wan-notify" || true
+echo "✅ WANSTAGE ONE BUTTON complete"

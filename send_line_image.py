@@ -1,13 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import os, sys, argparse, json, requests
+import argparse
+import json
+import os
+import sys
+
+import requests
 
 
 def main():
     p = argparse.ArgumentParser(description="Send an image message via LINE (raw HTTP).")
     p.add_argument("url", help="公開アクセス可能な画像URL (https://...)")
     p.add_argument(
-        "--to", default=os.environ.get("LINE_USER_ID"), help="宛先（未指定は $LINE_USER_ID）"
+        "--to",
+        default=os.environ.get("LINE_USER_ID"),
+        help="宛先（未指定は $LINE_USER_ID）",
     )
     p.add_argument("--dry-run", action="store_true", help="送らず内容だけ表示")
     args = p.parse_args()
@@ -34,7 +41,11 @@ def main():
     payload = {
         "to": args.to,
         "messages": [
-            {"type": "image", "originalContentUrl": args.url, "previewImageUrl": args.url}
+            {
+                "type": "image",
+                "originalContentUrl": args.url,
+                "previewImageUrl": args.url,
+            }
         ],
     }
 
@@ -48,7 +59,10 @@ def main():
         if 200 <= r.status_code < 300:
             print("[send_line_image] ok:", args.url)
         else:
-            print(f"[send_line_image] FAIL: status={r.status_code} body={r.text}", file=sys.stderr)
+            print(
+                f"[send_line_image] FAIL: status={r.status_code} body={r.text}",
+                file=sys.stderr,
+            )
             sys.exit(1)
     except Exception as e:
         print(f"[send_line_image] FAIL: {e.__class__.__name__}: {e}", file=sys.stderr)

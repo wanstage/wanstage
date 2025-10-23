@@ -1,0 +1,297 @@
+===== mypy (pre-commit hook) =====
+mypy.....................................................................Failed
+- hook id: mypy
+- exit code: 2
+
+scripts/legacy/post_to_instagram.py: error: Duplicate module named "post_to_instagram" (also at "core/post_to_instagram.py")
+scripts/legacy/post_to_instagram.py: note: See https://mypy.readthedocs.io/en/stable/running_mypy.html#mapping-file-paths-to-modules for more info
+scripts/legacy/post_to_instagram.py: note: Common resolutions include: a) using `--exclude` to avoid checking one of them, b) adding `__init__.py` somewhere, c) using `--explicit-package-bases` or adjusting MYPYPATH
+Found 1 error in 1 file (errors prevented further checking)
+
+
+===== gitleaks (pre-commit hook) =====
+gitleaks (secrets scan)..................................................Failed
+- hook id: gitleaks
+- exit code: 126
+
+Error: unknown flag: --no-git
+Usage:
+  gitleaks protect [flags]
+
+Flags:
+  -h, --help     help for protect
+      --staged   detect secrets in a --staged state
+
+Global Flags:
+  -b, --baseline-path string                                                                             path to baseline with issues that can be ignored
+  -c, --config string                                                                                    config file path
+                                                                                                         order of precedence:
+                                                                                                         1. --config/-c
+                                                                                                         2. env var GITLEAKS_CONFIG
+                                                                                                         3. (--source/-s)/.gitleaks.toml
+                                                                                                         If none of the three options are used, then gitleaks will use the default config
+      --enable-rule gitleaks detect --enable-rule=atlassian-api-token --enable-rule=slack-access-token   only enable specific rules by id, ex: gitleaks detect --enable-rule=atlassian-api-token --enable-rule=slack-access-token
+      --exit-code int                                                                                    exit code when leaks have been encountered (default 1)
+      --follow-symlinks                                                                                  scan files that are symlinks to other files
+  -i, --gitleaks-ignore-path string                                                                      path to .gitleaksignore file or folder containing one (default ".")
+      --ignore-gitleaks-allow                                                                            ignore gitleaks:allow comments
+  -l, --log-level string                                                                                 log level (trace, debug, info, warn, error, fatal) (default "info")
+      --log-opts string                                                                                  git log options
+      --max-target-megabytes int                                                                         files larger than this will be skipped
+      --no-banner                                                                                        suppress banner
+      --no-color                                                                                         turn off color for verbose output
+      --redact uint[=100]                                                                                redact secrets from logs and stdout. To redact only parts of the secret just apply a percent value from 0..100. For example --redact=20 (default 100%)
+  -f, --report-format string                                                                             output format (json, csv, junit, sarif) (default "json")
+  -r, --report-path string                                                                               report file
+  -s, --source string                                                                                    path to source (default ".")
+  -v, --verbose                                                                                          show verbose output from scan
+
+
+===== hook inventory =====
+ruff (legacy alias)......................................................Failed
+- hook id: ruff
+- duration: 0.07s
+- exit code: 1
+
+F821 Undefined name `cfg`
+   --> python_src/agent_loop.py:138:13
+    |
+137 | def run_agent(user_id: str = "default_user"):
+138 |     brand = cfg.get("brand_name", "WanStage")
+    |             ^^^
+139 |     channels = cfg.get("channels", ["instagram", "tiktok"])
+    |
+
+F821 Undefined name `cfg`
+   --> python_src/agent_loop.py:139:16
+    |
+137 | def run_agent(user_id: str = "default_user"):
+138 |     brand = cfg.get("brand_name", "WanStage")
+139 |     channels = cfg.get("channels", ["instagram", "tiktok"])
+    |                ^^^
+140 |
+141 |     # JSON-only を強制するプロンプト（説明文を出させない）
+    |
+
+F821 Undefined name `_fallback_plan`
+   --> python_src/agent_loop.py:156:16
+    |
+154 |     except Exception as e:
+155 |         log.warning("LLM unstable -> local fallback used: %s", e)
+156 |         plan = _fallback_plan(brand, channels)
+    |                ^^^^^^^^^^^^^^
+157 |
+158 |     intent = plan.get("intent", "")
+    |
+
+F821 Undefined name `tool_compose_and_post`
+   --> python_src/agent_loop.py:160:16
+    |
+158 |     intent = plan.get("intent", "")
+159 |     if intent == "compose_post":
+160 |         return tool_compose_and_post(plan, user_id)
+    |                ^^^^^^^^^^^^^^^^^^^^^
+161 |     elif intent == "research":
+162 |         return tool_research_stub(plan)
+    |
+
+F821 Undefined name `tool_research_stub`
+   --> python_src/agent_loop.py:162:16
+    |
+160 |         return tool_compose_and_post(plan, user_id)
+161 |     elif intent == "research":
+162 |         return tool_research_stub(plan)
+    |                ^^^^^^^^^^^^^^^^^^
+163 |     elif intent == "analyze_metrics":
+164 |         return tool_analyze_metrics_stub(plan)
+    |
+
+F821 Undefined name `tool_analyze_metrics_stub`
+   --> python_src/agent_loop.py:164:16
+    |
+162 |         return tool_research_stub(plan)
+163 |     elif intent == "analyze_metrics":
+164 |         return tool_analyze_metrics_stub(plan)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^
+165 |     else:
+166 |         # 想定外でも compose に倒す
+    |
+
+F821 Undefined name `_fallback_plan`
+   --> python_src/agent_loop.py:167:16
+    |
+165 |     else:
+166 |         # 想定外でも compose に倒す
+167 |         plan = _fallback_plan(brand, channels)
+    |                ^^^^^^^^^^^^^^
+168 |         return tool_compose_and_post(plan, user_id)
+    |
+
+F821 Undefined name `tool_compose_and_post`
+   --> python_src/agent_loop.py:168:16
+    |
+166 |         # 想定外でも compose に倒す
+167 |         plan = _fallback_plan(brand, channels)
+168 |         return tool_compose_and_post(plan, user_id)
+    |                ^^^^^^^^^^^^^^^^^^^^^
+    |
+
+Found 8 errors.
+
+ruff format..............................................................Failed
+- hook id: ruff-format
+- duration: 0.02s
+- files were modified by this hook
+
+31 files reformatted, 67 files left unchanged
+
+black....................................................................Failed
+- hook id: black
+- duration: 0.91s
+- files were modified by this hook
+
+reformatted analytics/notion_upsert_ga4.py
+reformatted _legacy_notify/notify_line_simple.py
+reformatted analytics/ga4_quick.py
+reformatted api/wanstage_api.py
+reformatted analytics/update_ranking.py
+reformatted analytics/ga4_to_slack.py
+reformatted autogen_post.py
+reformatted experiments/ab_picker.py
+reformatted autogen_post_min.py
+reformatted monetize/bitly_utils.py
+reformatted monetize/build_affiliate_link.py
+reformatted experiments/collect_clicks.py
+reformatted auto/run_post_flow.py
+reformatted monetize/shopify_discount.py
+reformatted python_src/add_preview_patch.py
+reformatted monetize/send_kpi_to_sheet.py
+reformatted notify/notify_line_messaging.py
+reformatted python_src/add_gcs_integration.py
+reformatted local_shortener.py
+reformatted python_src/ig_post.py
+reformatted dashboard/wanstage_dashboard.py
+reformatted python_src/notify_utils.py
+reformatted realtime_test.py
+reformatted scripts/_slack_notify.py
+reformatted send_line_image.py
+reformatted send_line_sticker.py
+reformatted python_src/wan_flow_demo.py
+reformatted run_line_flex_guard.py
+reformatted ui_main.py
+reformatted python_src/note_auto_post.py
+reformatted python_src/fb_page_post.py
+
+All done! ✨ 🍰 ✨
+31 files reformatted, 67 files left unchanged.
+
+mypy.....................................................................Failed
+- hook id: mypy
+- duration: 0.36s
+- exit code: 2
+
+scripts/legacy/post_to_instagram.py: error: Duplicate module named "post_to_instagram" (also at "core/post_to_instagram.py")
+scripts/legacy/post_to_instagram.py: note: See https://mypy.readthedocs.io/en/stable/running_mypy.html#mapping-file-paths-to-modules for more info
+scripts/legacy/post_to_instagram.py: note: Common resolutions include: a) using `--exclude` to avoid checking one of them, b) adding `__init__.py` somewhere, c) using `--explicit-package-bases` or adjusting MYPYPATH
+Found 1 error in 1 file (errors prevented further checking)
+
+gitleaks (secrets scan)..................................................Failed
+- hook id: gitleaks
+- duration: 0.01s
+- exit code: 126
+
+Error: unknown flag: --no-git
+Usage:
+  gitleaks protect [flags]
+
+Flags:
+  -h, --help     help for protect
+      --staged   detect secrets in a --staged state
+
+Global Flags:
+  -b, --baseline-path string                                                                             path to baseline with issues that can be ignored
+  -c, --config string                                                                                    config file path
+                                                                                                         order of precedence:
+                                                                                                         1. --config/-c
+                                                                                                         2. env var GITLEAKS_CONFIG
+                                                                                                         3. (--source/-s)/.gitleaks.toml
+                                                                                                         If none of the three options are used, then gitleaks will use the default config
+      --enable-rule gitleaks detect --enable-rule=atlassian-api-token --enable-rule=slack-access-token   only enable specific rules by id, ex: gitleaks detect --enable-rule=atlassian-api-token --enable-rule=slack-access-token
+      --exit-code int                                                                                    exit code when leaks have been encountered (default 1)
+      --follow-symlinks                                                                                  scan files that are symlinks to other files
+  -i, --gitleaks-ignore-path string                                                                      path to .gitleaksignore file or folder containing one (default ".")
+      --ignore-gitleaks-allow                                                                            ignore gitleaks:allow comments
+  -l, --log-level string                                                                                 log level (trace, debug, info, warn, error, fatal) (default "info")
+      --log-opts string                                                                                  git log options
+      --max-target-megabytes int                                                                         files larger than this will be skipped
+      --no-banner                                                                                        suppress banner
+      --no-color                                                                                         turn off color for verbose output
+      --redact uint[=100]                                                                                redact secrets from logs and stdout. To redact only parts of the secret just apply a percent value from 0..100. For example --redact=20 (default 100%)
+  -f, --report-format string                                                                             output format (json, csv, junit, sarif) (default "json")
+  -r, --report-path string                                                                               report file
+  -s, --source string                                                                                    path to source (default ".")
+  -v, --verbose                                                                                          show verbose output from scan
+
+
+===== versions =====
+Python 3.13.5
+mypy 1.18.2 (compiled: yes)
+8.28.0
+
+===== gitleaks dry-run (manual) =====
+[90m10:43PM[0m [32mINF[0m [1m172 commits scanned.[0m
+[90m10:43PM[0m [32mINF[0m [1mscanned ~344611434 bytes (344.61 MB) in 6.15s[0m
+[90m10:43PM[0m [32mINF[0m [1mno leaks found[0m
+==== .pre-commit-config.yaml (tail) ====
+repos:
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.14.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: \.py$
+        # 1つの (?x) ブロックにまとめること。ここが壊れていた
+        exclude: |
+          (?x)^(?:bin/|scripts/legacy/|README\.WANSTAGE\.md)$
+      - id: ruff-format
+        files: \.py$
+        exclude: |
+          (?x)^(?:bin/|scripts/legacy/|README\.WANSTAGE\.md)$
+
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        files: \.py$
+        exclude: |
+          (?x)^(?:bin/|scripts/legacy/|README\.WANSTAGE\.md)$
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.2
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - types-requests
+          - types-PyYAML
+          - types-python-dateutil
+        args:
+          - --config-file=.mypy.ini
+        files: \.py$
+        # mypyの一時除外（必要最低限）。後で外せます
+        exclude: |
+          (?x)^(?:app\.py|remote/app\.py|dashboard/wanstage_dashboard\.py)$
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+        name: gitleaks (secrets scan)
+        args: ["protect", "--verbose", "--redact", "--staged", "--no-git"]
+==== .mypy.ini ====
+[mypy]
+python_version = 3.12
+ignore_missing_imports = True
+cache_dir = .mypy_cache
+files = core, python_src, analytics, api, dashboard, notify, monetize, scripts
+# 一時除外（あとで戻す）
+exclude = (?x)^(?: app\.py | remote/app\.py | dashboard/wanstage_dashboard\.py )$|scripts/legacy

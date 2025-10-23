@@ -23101,7 +23101,7 @@
 │   ├── publish_ui_quick.sh
 │   ├── repair_venv.sh
 │   ├── restore-backup.sh
-│   ├── run_continue.py
+│   ├── run_continue.sh
 │   ├── run_continue.sh
 │   ├── run_line_flex.sh
 │   ├── run_magic_flow_now.sh
@@ -24394,7 +24394,7 @@
 │   ├── repair_venv.sh
 │   ├── repair_venv.sh.bak_20250926_093854
 │   ├── repair_venv.sh.bak_20250926_093902
-│   ├── run_continue.py
+│   ├── run_continue.sh
 │   ├── run_continue.sh
 │   ├── run_continue.sh.bak_20250926_093854
 │   ├── run_continue.sh.bak_20250926_093902

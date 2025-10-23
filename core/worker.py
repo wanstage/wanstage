@@ -1,4 +1,5 @@
-import time, os, sys
+import os
+import time
 
 print("[wan-py-worker] start pid=", os.getpid(), flush=True)
 try:

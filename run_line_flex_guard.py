@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import argparse, csv, datetime, json, os, pathlib, re, subprocess, sys, urllib.request
+import argparse
+import csv
+import datetime
+import json
+import os
+import pathlib
+import re
+import subprocess
+import sys
+import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parent
 LOGDIR = ROOT / "logs"

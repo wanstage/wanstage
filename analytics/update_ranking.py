@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-import os, csv, random, datetime
+import csv
+import datetime
+import os
+import random
 
 CATS = ["dogs", "tech", "cats"]
 CSV = os.path.join(os.environ["HOME"], "WANSTAGE", "logs", "revenue_log.csv")

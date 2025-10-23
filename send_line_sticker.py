@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import os, sys, argparse, json, requests
+import argparse
+import json
+import os
+import sys
+
+import requests
 
 
 def main():
@@ -8,7 +13,9 @@ def main():
     p.add_argument("--package", default="11539", help="packageId")
     p.add_argument("--sticker", default="52114136", help="stickerId")
     p.add_argument(
-        "--to", default=os.environ.get("LINE_USER_ID"), help="宛先（未指定は $LINE_USER_ID）"
+        "--to",
+        default=os.environ.get("LINE_USER_ID"),
+        help="宛先（未指定は $LINE_USER_ID）",
     )
     p.add_argument("--dry-run", action="store_true", help="送らず内容だけ表示")
     args = p.parse_args()
@@ -35,7 +42,11 @@ def main():
     payload = {
         "to": args.to,
         "messages": [
-            {"type": "sticker", "packageId": str(args.package), "stickerId": str(args.sticker)}
+            {
+                "type": "sticker",
+                "packageId": str(args.package),
+                "stickerId": str(args.sticker),
+            }
         ],
     }
 
@@ -50,7 +61,8 @@ def main():
             print(f"[send_line_sticker] ok: packageId={args.package} stickerId={args.sticker}")
         else:
             print(
-                f"[send_line_sticker] FAIL: status={r.status_code} body={r.text}", file=sys.stderr
+                f"[send_line_sticker] FAIL: status={r.status_code} body={r.text}",
+                file=sys.stderr,
             )
             sys.exit(1)
     except Exception as e:

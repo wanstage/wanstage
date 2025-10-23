@@ -1,14 +1,15 @@
-import os, json
+import os
+
 from dotenv import load_dotenv
 from google.analytics.data_v1beta import (
     BetaAnalyticsDataClient,
-    RunReportRequest,
     DateRange,
-    Metric,
     Dimension,
+    Metric,
+    RunReportRequest,
 )
-from google_auth_oauthlib.flow import InstalledAppFlow
 from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
 
 BASE = os.path.expanduser("~/WANSTAGE")
 CLIENT_JSON = os.path.join(BASE, "keys", "ga4-oauth.json")

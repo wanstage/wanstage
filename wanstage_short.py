@@ -1,4 +1,8 @@
-import os, time, urllib.parse as _up, requests
+import os
+import time
+import urllib.parse as _up
+
+import requests
 
 SHORTENER_ORIGIN = os.getenv("SHORTENER_ORIGIN", "http://127.0.0.1:8000")
 SHORTENER_ADMIN_TOKEN = os.getenv("SHORTENER_ADMIN_TOKEN", "set-me")

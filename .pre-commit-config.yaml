@@ -1,17 +1,37 @@
-exclude: |
-  (?x)^(
-    bin/run_continue\.py|
-    bin/send_line_message\.py|
-    core/generate_video\.py|
-    notify/notify_line_message\.py
-  )$
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.14.0
     hooks:
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
+      - id: ruff
+        args: [--fix]
+        files: \.py$
+        exclude: |
+          (?x)^(?:bin/|scripts/legacy/|README\.WANSTAGE\.md)$
+      - id: ruff-format
+        files: \.py$
+        exclude: |
+          (?x)^(?:bin/|scripts/legacy/|README\.WANSTAGE\.md)$
+
   - repo: https://github.com/psf/black
-    rev: 25.9.0
+    rev: 24.10.0
     hooks:
       - id: black
+        files: \.py$
+        exclude: |
+          (?x)^(?:bin/|scripts/legacy/|README\.WANSTAGE\.md)$
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.2
+    hooks:
+      - id: mypy
+        pass_filenames: false   # ← “対象は .mypy.ini で決める”方式に固定
+        args: [--config-file=.mypy.ini]
+        files: \.py$
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+        name: gitleaks (brew)
+        # v8 系は protect/detect の引数が厳密。pre-commit ではファイルを渡してくれるので最小に。
+        args: ["detect", "--no-banner", "--redact", "--exit-code=1"]

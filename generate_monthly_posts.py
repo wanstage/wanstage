@@ -1,13 +1,19 @@
-import argparse, json, calendar
-from datetime import date, timedelta
-from dateutil.relativedelta import relativedelta
+import argparse
+import calendar
+import json
+from datetime import date
+
 import pandas as pd
+from dateutil.relativedelta import relativedelta
 
 
 def build(month: str, per_day: int):
     today = date.today()
     if month == "next":
-        y, m = (today + relativedelta(months=+1)).year, (today + relativedelta(months=+1)).month
+        y, m = (
+            (today + relativedelta(months=+1)).year,
+            (today + relativedelta(months=+1)).month,
+        )
     elif month == "this":
         y, m = today.year, today.month
     else:

@@ -1,4 +1,6 @@
-import os, datetime as dt
+import datetime as dt
+import os
+
 from dotenv import load_dotenv
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import DateRange, Metric, RunReportRequest

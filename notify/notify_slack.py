@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-import os, json
+import json
+import os
 
 try:
     import requests

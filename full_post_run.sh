@@ -12,7 +12,7 @@ PY="$BASE/.venv/bin/python3"
 [ -x "$PY" ] || PY="$(command -v python3 || true)"
 [ -n "$PY" ] || { echo "[FATAL] python3 not found"; exit 1; }
 
-POST_JSON="$($PY core/generate_post.py)"
+POST_JSON="$($PY core/generate_post_from_prompt.py)"
 CAP_JSON="$(printf '%s' "$POST_JSON" | $PY core/compose_caption.py)"
 if [ "$DEBUG" = "1" ]; then TMP_FILE="/tmp/wan_post.json"; else if [ "$DEBUG" = "1" ]; then TMP_FILE="/tmp/wan_post.json"; else TMP_FILE="$(mktemp)"; fi; fi
 printf '%s' "$CAP_JSON" > "$TMP_FILE"

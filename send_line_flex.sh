@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import os
-import sys
-import json
 import argparse
 import datetime
+import json
+import os
 import pathlib
+import sys
+
 import requests
 
 ROOT = pathlib.Path(__file__).resolve().parent

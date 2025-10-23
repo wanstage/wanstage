@@ -47,7 +47,7 @@ FILES=(
   "$BASE/analytics/ga4_quick_oauth.py"
   "$BASE/analytics/ga4_to_slack.py"
   "$BASE/analytics/ga4_quick.py"
-  "$BASE/scripts/full_auto_post_flow.sh"
+# [DISABLED by script]   "$BASE/scripts/full_auto_post_flow.sh"
   "$BASE/.env"
 )
 for f in "${FILES[@]}"; do

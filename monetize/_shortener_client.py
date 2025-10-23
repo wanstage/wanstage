@@ -1,11 +1,14 @@
-import os, requests
+import os
+
+import requests
 
 ORIGIN = os.getenv("SHORTENER_ORIGIN", "http://127.0.0.1:8000")
 TOKEN = os.getenv("SHORTENER_ADMIN_TOKEN", "set-me")
 
 
 def add_utm(url: str) -> str:
-    import urllib.parse as up, time
+    import time
+    import urllib.parse as up
 
     pr = up.urlparse(url)
     qs = dict(up.parse_qsl(pr.query, keep_blank_values=True))
@@ -23,7 +26,10 @@ def add_utm(url: str) -> str:
 def shorten_url(long_url: str) -> tuple[str, str]:
     r = requests.post(
         f"{ORIGIN}/admin/create",
-        headers={"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"},
+        headers={
+            "Authorization": f"Bearer {TOKEN}",
+            "Content-Type": "application/json",
+        },
         json={"url": long_url},
         timeout=5,
     )

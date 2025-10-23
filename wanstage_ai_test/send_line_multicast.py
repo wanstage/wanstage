@@ -23,7 +23,10 @@ user_ids = [
     "6J4CNUPQHQ",
 ]
 
-headers = {"Content-Type": "application/json", "Authorization": f"Bearer {access_token}"}
+headers = {
+    "Content-Type": "application/json",
+    "Authorization": f"Bearer {access_token}",
+}
 
 # 各ユーザーにメッセージ送信
 for user_id in user_ids:

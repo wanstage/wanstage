@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-import json, datetime, os
+import datetime
+import json
+import os
 
 data = {
     "title": f"WANSTAGE Post {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}",

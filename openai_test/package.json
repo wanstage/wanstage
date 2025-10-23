@@ -1,0 +1,28 @@
+{
+  "name": "openai_test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "openai": "^6.3.0"
+  },
+  "engines": {
+    "node": ">=24.8.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.11"
+  },
+  "overrides": {
+    "@esbuild-kit/core-utils": "^3.3.2",
+    "@esbuild-kit/esm-loader": "^2.6.5",
+    "esbuild": "0.25.11"
+  }
+}

@@ -31,7 +31,10 @@ def create_discount():
         }
     }
     r = requests.post(
-        f"https://{STORE}/admin/api/2023-10/price_rules.json", headers=hdr, json=rule, timeout=30
+        f"https://{STORE}/admin/api/2023-10/price_rules.json",
+        headers=hdr,
+        json=rule,
+        timeout=30,
     )
     r.raise_for_status()
     rule_id = r.json()["price_rule"]["id"]

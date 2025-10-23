@@ -1,4 +1,7 @@
-import os, json, ssl, urllib.request
+import json
+import os
+import ssl
+import urllib.request
 
 try:
     import certifi

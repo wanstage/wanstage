@@ -131,3 +131,6 @@ if [ -n "$SLACK_WEBHOOK_URL" ]; then
     --data '{"text":"[WARN] 投稿失敗。ログを確認してください"}' \
     "$SLACK_WEBHOOK_URL" >/dev/null 2>&1 || true
 fi
+
+# --- 自動通知（LINE→Slackフォールバック） ---
+python3 "$HOME/WANSTAGE/notify/notify_line_message.py" "📡 投稿完了通知：Slackフォールバック対応済み"

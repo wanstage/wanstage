@@ -1,4 +1,8 @@
-import os, datetime as dt, json, urllib.request
+import datetime as dt
+import json
+import os
+import urllib.request
+
 from dotenv import load_dotenv
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import DateRange, Metric, RunReportRequest
@@ -28,7 +32,10 @@ keys = ("activeUsers", "newUsers", "sessions", "screenPageViews")
 today = dt.date.today().isoformat()
 
 text = "\n".join(
-    [f"*GA4 Daily* ({today}, last {days}d)", *[f"- {k}: {v}" for k, v in zip(keys, vals)]]
+    [
+        f"*GA4 Daily* ({today}, last {days}d)",
+        *[f"- {k}: {v}" for k, v in zip(keys, vals)],
+    ]
 )
 
 data = json.dumps({"text": text}).encode()

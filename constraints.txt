@@ -1,0 +1,2 @@
+# 0.4.0 は ref leak でyanked → 常に回避
+propcache!=0.4.0

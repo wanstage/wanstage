@@ -1,11 +1,14 @@
-import os, csv, datetime
+import csv
+import datetime
+import os
+
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import (
     DateRange,
-    Metric,
     Dimension,
     Filter,
     FilterExpression,
+    Metric,
     RunReportRequest,
 )
 
@@ -37,7 +40,8 @@ def run(days=1):
         date_ranges=[date_range],
         dimension_filter=FilterExpression(
             filter=Filter(
-                field_name="sessionSource", string_filter=Filter.StringFilter(value="wanstage")
+                field_name="sessionSource",
+                string_filter=Filter.StringFilter(value="wanstage"),
             )
         ),
     )

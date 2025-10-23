@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-import os, sys, json, urllib.parse, yaml
+import json
+import os
+import sys
+import urllib.parse
+
+import yaml
 
 cfg_path = os.path.join(os.environ["HOME"], "WANSTAGE", "config", "links.yaml")
 if os.path.exists(cfg_path):

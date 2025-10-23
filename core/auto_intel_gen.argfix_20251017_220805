@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+import datetime
+import os
+import subprocess
+import sys
+
+import requests
+
+BASE = os.path.expanduser("~/WANSTAGE")
+LOG_FILE = os.path.join(BASE, "logs", "auto_intel_gen.log")
+PHASE3 = "--phase=3" in sys.argv
+
+def log(msg):
+    ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{ts}] {msg}")
+    with open(LOG_FILE, "a") as f:
+        f.write(f"[{ts}] {msg}\n")
+
+def slack_notify(text, emoji="🧠"):
+    url = os.environ.get("SLACK_WEBHOOK_URL")
+    if not url:
+        log("⚠ SLACK_WEBHOOK_URL 未設定（通知スキップ）")
+        return
+    try:
+        requests.post(url, json={"text": f"{emoji} *WANSTAGE_AUTO_INTEL_GEN*: {text}"}, timeout=5)
+        log(f"📤 Slack通知送信: {text}")
+    except Exception as e:
+        log(f"❌ Slack通知失敗: {e}")
+
+def pm2_register(name, path, cron="*/10 * * * *"):
+    cmd = f'''pm2 delete {name} 2>/dev/null || true
+pm2 start "bash -lc 'source {BASE}/.env; bash {path}'" --name {name} --cron "{cron}"
+pm2 save'''
+    subprocess.run(cmd, shell=True, check=False)
+    log(f"⚙️ PM2登録完了: {name} ({path})")
+
+def main():
+    log("🚀 AUTO_INTEL_GEN Phase 3 started")
+    slack_notify("Phase 3 自動生成を開始しました")
+
+    targets = [
+        ("auto_macro_gen", f"{BASE}/core/auto_macro_gen.sh"),
+        ("auto_patch_ui", f"{BASE}/core/auto_patch_ui.sh")
+    ]
+
+    for name, path in targets:
+        if os.path.exists(path):
+            pm2_register(name, path)
+            slack_notify(f"{name} をPM2登録しました ✅")
+        else:
+            log(f"⚠ スクリプトが見つかりません: {path}")
+
+    slack_notify("Phase 3 自動化処理 完了 🎉")
+    log("🏁 AUTO_INTEL_GEN Phase 3 完了")
+
+if __name__ == "__main__":
+    main()

@@ -1,4 +1,7 @@
-import json, pathlib, subprocess, sys, textwrap
+import json
+import pathlib
+import subprocess
+import sys
 
 root = pathlib.Path(__file__).resolve().parents[1]
 p_json = root / "data/outputs/posts_next.json"
@@ -18,7 +21,17 @@ voice = root / "media/audio/test.aiff"
 if not voice.exists():
     # ない場合はダミー無音3秒
     subprocess.run(
-        ["ffmpeg", "-f", "lavfi", "-t", "3", "-i", "anullsrc=r=44100:cl=stereo", "-y", str(voice)],
+        [
+            "ffmpeg",
+            "-f",
+            "lavfi",
+            "-t",
+            "3",
+            "-i",
+            "anullsrc=r=44100:cl=stereo",
+            "-y",
+            str(voice),
+        ],
         check=True,
     )
 

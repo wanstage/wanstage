@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-import os, json, datetime
+import json
+import os
 
 PROMPT = os.environ.get("POST_PROMPT", "今日のAIトピックを紹介")
 cat = os.environ.get("POST_CATEGORY", "tech")

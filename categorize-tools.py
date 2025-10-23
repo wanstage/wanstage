@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-import sys, re, os, csv
+import csv
+import os
+import re
+import sys
 
 if len(sys.argv) < 2:
     print("Usage: categorize-tools.py filelist.txt [output_csv]")

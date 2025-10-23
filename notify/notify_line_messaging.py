@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-import os, json, pathlib
+import json
+import os
+import pathlib
 
 BASE = os.path.expanduser("~/WANSTAGE")
 ENV_PATH = os.path.join(BASE, ".env")

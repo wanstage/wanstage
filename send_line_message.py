@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import os, sys, argparse, uuid, json, requests, string
+import argparse
+import os
+import sys
+import uuid
+
+import requests
 
 
 def ensure_ascii_headers(h):
@@ -16,7 +21,9 @@ def ensure_ascii_headers(h):
 def main():
     p = argparse.ArgumentParser(description="Send a LINE push message (raw HTTP).")
     p.add_argument(
-        "--to", default=os.environ.get("LINE_USER_ID"), help="User ID (defaults to $LINE_USER_ID)"
+        "--to",
+        default=os.environ.get("LINE_USER_ID"),
+        help="User ID (defaults to $LINE_USER_ID)",
     )
     p.add_argument("--text", required=True, help="Text message")
     p.add_argument("--dry-run", action="store_true", help="Send nothing, just print")
@@ -49,13 +56,17 @@ def main():
 
     try:
         r = requests.post(
-            "https://api.line.me/v2/bot/message/push", headers=headers, json=payload, timeout=15
+            "https://api.line.me/v2/bot/message/push",
+            headers=headers,
+            json=payload,
+            timeout=15,
         )
         if 200 <= r.status_code < 300:
             print("[send_line_message] ok:", args.to)
         else:
             print(
-                f"[send_line_message] FAIL: status={r.status_code} body={r.text}", file=sys.stderr
+                f"[send_line_message] FAIL: status={r.status_code} body={r.text}",
+                file=sys.stderr,
             )
             sys.exit(1)
     except Exception as e:

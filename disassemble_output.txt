@@ -1,0 +1,175 @@
+Disassembly of python_src/__pycache__/input_module.cpython-313.pyc:
+  0           RESUME                   0
+
+  1           LOAD_CONST               0 (0)
+              LOAD_CONST               1 (None)
+              IMPORT_NAME              0 (os)
+              STORE_NAME               0 (os)
+
+  2           LOAD_CONST               0 (0)
+              LOAD_CONST               1 (None)
+              IMPORT_NAME              1 (yaml)
+              STORE_NAME               1 (yaml)
+
+  3           LOAD_CONST               0 (0)
+              LOAD_CONST               1 (None)
+              IMPORT_NAME              2 (json)
+              STORE_NAME               2 (json)
+
+  5           LOAD_CONST               4 (('config/brand_config.yaml',))
+              LOAD_CONST               2 (<code object load_brand_config at 0x161004740, file "/Users/okayoshiyuki/WANSTAGE/python_src/input_module.py", line 5>)
+              MAKE_FUNCTION
+              SET_FUNCTION_ATTRIBUTE   1 (defaults)
+              STORE_NAME               3 (load_brand_config)
+
+ 13           LOAD_CONST               5 (('config/credentials.json',))
+              LOAD_CONST               3 (<code object load_credentials at 0x161019c50, file "/Users/okayoshiyuki/WANSTAGE/python_src/input_module.py", line 13>)
+              MAKE_FUNCTION
+              SET_FUNCTION_ATTRIBUTE   1 (defaults)
+              STORE_NAME               4 (load_credentials)
+              RETURN_CONST             1 (None)
+
+Disassembly of <code object load_brand_config at 0x161004740, file "/Users/okayoshiyuki/WANSTAGE/python_src/input_module.py", line 5>:
+   5           RESUME                   0
+
+   7           LOAD_GLOBAL              0 (os)
+               LOAD_ATTR                2 (path)
+               LOAD_ATTR                5 (dirname + NULL|self)
+               LOAD_GLOBAL              0 (os)
+               LOAD_ATTR                2 (path)
+               LOAD_ATTR                7 (abspath + NULL|self)
+               LOAD_GLOBAL              8 (__file__)
+               CALL                     1
+               CALL                     1
+               STORE_FAST               1 (base_dir)
+
+   8           LOAD_GLOBAL              0 (os)
+               LOAD_ATTR                2 (path)
+               LOAD_ATTR                5 (dirname + NULL|self)
+               LOAD_FAST                1 (base_dir)
+               CALL                     1
+               STORE_FAST               2 (project_root)
+
+   9           LOAD_GLOBAL              0 (os)
+               LOAD_ATTR                2 (path)
+               LOAD_ATTR               11 (join + NULL|self)
+               LOAD_FAST_LOAD_FAST     32 (project_root, path)
+               CALL                     2
+               STORE_FAST               3 (abs_path)
+
+  10           LOAD_GLOBAL             13 (open + NULL)
+               LOAD_FAST                3 (abs_path)
+               LOAD_CONST               1 ('r')
+               LOAD_CONST               2 ('utf-8')
+               LOAD_CONST               3 (('encoding',))
+               CALL_KW                  3
+               BEFORE_WITH
+       L1:     STORE_FAST               4 (f)
+
+  11           LOAD_GLOBAL             14 (yaml)
+               LOAD_ATTR               16 (safe_load)
+               PUSH_NULL
+               LOAD_FAST                4 (f)
+               CALL                     1
+
+  10   L2:     SWAP                     2
+               LOAD_CONST               0 (None)
+               LOAD_CONST               0 (None)
+               LOAD_CONST               0 (None)
+               CALL                     2
+               POP_TOP
+               RETURN_VALUE
+       L3:     PUSH_EXC_INFO
+               WITH_EXCEPT_START
+               TO_BOOL
+               POP_JUMP_IF_TRUE         1 (to L4)
+               RERAISE                  2
+       L4:     POP_TOP
+       L5:     POP_EXCEPT
+               POP_TOP
+               POP_TOP
+               RETURN_CONST             0 (None)
+
+  --   L6:     COPY                     3
+               POP_EXCEPT
+               RERAISE                  1
+ExceptionTable:
+  L1 to L2 -> L3 [1] lasti
+  L3 to L5 -> L6 [3] lasti
+
+Disassembly of <code object load_credentials at 0x161019c50, file "/Users/okayoshiyuki/WANSTAGE/python_src/input_module.py", line 13>:
+  13           RESUME                   0
+
+  14           LOAD_GLOBAL              0 (os)
+               LOAD_ATTR                2 (path)
+               LOAD_ATTR                5 (dirname + NULL|self)
+               LOAD_GLOBAL              0 (os)
+               LOAD_ATTR                2 (path)
+               LOAD_ATTR                7 (abspath + NULL|self)
+               LOAD_GLOBAL              8 (__file__)
+               CALL                     1
+               CALL                     1
+               STORE_FAST               1 (base_dir)
+
+  15           LOAD_GLOBAL              0 (os)
+               LOAD_ATTR                2 (path)
+               LOAD_ATTR                5 (dirname + NULL|self)
+               LOAD_FAST                1 (base_dir)
+               CALL                     1
+               STORE_FAST               2 (project_root)
+
+  16           LOAD_GLOBAL              0 (os)
+               LOAD_ATTR                2 (path)
+               LOAD_ATTR               11 (join + NULL|self)
+               LOAD_FAST_LOAD_FAST     32 (project_root, path)
+               CALL                     2
+               STORE_FAST               3 (abs_path)
+
+  17           LOAD_GLOBAL             13 (open + NULL)
+               LOAD_FAST                3 (abs_path)
+               LOAD_CONST               1 ('r')
+               LOAD_CONST               2 ('utf-8')
+               LOAD_CONST               3 (('encoding',))
+               CALL_KW                  3
+               BEFORE_WITH
+       L1:     STORE_FAST               4 (f)
+
+  18           LOAD_GLOBAL             14 (json)
+               LOAD_ATTR               16 (load)
+               PUSH_NULL
+               LOAD_FAST                4 (f)
+               CALL                     1
+
+  17   L2:     SWAP                     2
+               LOAD_CONST               0 (None)
+               LOAD_CONST               0 (None)
+               LOAD_CONST               0 (None)
+               CALL                     2
+               POP_TOP
+               RETURN_VALUE
+       L3:     PUSH_EXC_INFO
+               WITH_EXCEPT_START
+               TO_BOOL
+               POP_JUMP_IF_TRUE         1 (to L4)
+               RERAISE                  2
+       L4:     POP_TOP
+       L5:     POP_EXCEPT
+               POP_TOP
+               POP_TOP
+               RETURN_CONST             0 (None)
+
+  --   L6:     COPY                     3
+               POP_EXCEPT
+               RERAISE                  1
+ExceptionTable:
+  L1 to L2 -> L3 [1] lasti
+  L3 to L5 -> L6 [3] lasti
+
+Constants (co_consts):
+(0, None, <code object load_brand_config at 0x161004740, file "/Users/okayoshiyuki/WANSTAGE/python_src/input_module.py", line 5>, <code object load_credentials at 0x161019c50, file "/Users/okayoshiyuki/WANSTAGE/python_src/input_module.py", line 13>, ('config/brand_config.yaml',), ('config/credentials.json',))
+
+Names (co_names):
+('os', 'yaml', 'json', 'load_brand_config', 'load_credentials')
+
+Var names (co_varnames):
+()

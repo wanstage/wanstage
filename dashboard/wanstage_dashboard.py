@@ -1,5 +1,9 @@
-import os, re, glob
-from datetime import datetime, date, time as dtime, timedelta
+import glob
+import os
+import re
+from datetime import date, datetime
+from datetime import time as dtime
+
 import pandas as pd
 import streamlit as st
 
@@ -38,13 +42,25 @@ if os.path.exists(LOG):
                 m_path = re.search(r": (/.+\.mp4)", line)
                 path = m_path.group(1) if m_path else ""
                 rows.append(
-                    {"time": ts, "level": "OK", "message": "生成", "path": path, "service": ""}
+                    {
+                        "time": ts,
+                        "level": "OK",
+                        "message": "生成",
+                        "path": path,
+                        "service": "",
+                    }
                 )
 
             elif "ERROR:" in line:
                 msg = line.split("ERROR:", 1)[1].strip()
                 rows.append(
-                    {"time": ts, "level": "ERROR", "message": msg, "path": "", "service": ""}
+                    {
+                        "time": ts,
+                        "level": "ERROR",
+                        "message": msg,
+                        "path": "",
+                        "service": "",
+                    }
                 )
 
             # あるなら拾う（将来のログ拡張用／無ければ出ません）

@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-import os, sys, socket, requests
+import os
+import socket
+import sys
+
+import requests
 from requests.exceptions import RequestException
 
 TOKEN = os.getenv("LINE_NOTIFY_TOKEN", "").strip()

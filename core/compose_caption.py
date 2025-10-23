@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-import sys, json, urllib.parse
+import json
+import sys
+import urllib.parse
 
 
 def add_utm(url: str) -> str:
