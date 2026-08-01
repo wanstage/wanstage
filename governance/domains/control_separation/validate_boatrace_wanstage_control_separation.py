@@ -12,7 +12,6 @@ import hashlib
 import json
 import os
 import re
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -54,9 +53,7 @@ def normalize_relative(raw: str) -> str:
 
 
 def is_under_prefix(path: str, prefix: str) -> bool:
-    normalized_path = normalize_relative(path)
-    normalized_prefix = normalize_relative(prefix)
-    return normalized_path.startswith(normalized_prefix)
+    return normalize_relative(path).startswith(normalize_relative(prefix))
 
 
 def iter_text_files(root: Path) -> Iterable[Path]:
@@ -92,15 +89,23 @@ def validate_contract(contract: dict) -> list[Finding]:
         )
 
     rules = contract.get("rules", {})
-    for key in (
+    fail_closed_rules = (
         "boatrace_recursive_scan_from_workspace_root",
+        "boatrace_glob_all_json",
+        "boatrace_glob_all_sha256",
+        "boatrace_glob_all_reports",
         "manifest_cross_domain_entry_allowed",
+        "manifest_parent_directory_escape_allowed",
+        "manifest_absolute_foreign_path_allowed",
         "cross_domain_sha_reuse_allowed",
         "sha_lookup_by_hash_only",
+        "sha_copied_from_chat_allowed",
+        "sha_copied_from_other_manifest_allowed",
         "implicit_domain_inference_allowed",
         "shared_execution_entrypoint_allowed",
         "shared_evidence_registry_allowed",
-    ):
+    )
+    for key in fail_closed_rules:
         if rules.get(key) is not False:
             findings.append(Finding("CONTRACT_RULE_NOT_FAIL_CLOSED", str(CONTRACT_RELATIVE_PATH), key))
     return findings
@@ -109,8 +114,7 @@ def validate_contract(contract: dict) -> list[Finding]:
 def validate_manifests(root: Path, contract: dict) -> tuple[list[Finding], int]:
     findings: list[Finding] = []
     checked = 0
-    domains = contract["domains"]
-    for domain_name, domain in domains.items():
+    for domain_name, domain in contract["domains"].items():
         manifest_rel = Path(domain["manifest"])
         manifest_path = root / manifest_rel
         if not manifest_path.exists():
@@ -125,11 +129,12 @@ def validate_manifests(root: Path, contract: dict) -> tuple[list[Finding], int]:
             if len(parts) != 2:
                 findings.append(Finding("MANIFEST_ENTRY_INVALID", str(manifest_rel), f"line={line_no}"))
                 continue
-            _, listed_path = parts
-            listed_path = normalize_relative(listed_path)
-            if listed_path.startswith("/") or "../" in listed_path:
-                findings.append(Finding("MANIFEST_PATH_ESCAPE", str(manifest_rel), listed_path))
+            _, raw_listed_path = parts
+            raw_normalized = raw_listed_path.replace("\\", "/")
+            if raw_normalized.startswith("/") or "../" in raw_normalized:
+                findings.append(Finding("MANIFEST_PATH_ESCAPE", str(manifest_rel), raw_listed_path))
                 continue
+            listed_path = normalize_relative(raw_listed_path)
             if not listed_path.startswith(allowed_root):
                 findings.append(
                     Finding("CROSS_DOMAIN_MANIFEST_ENTRY", str(manifest_rel), f"{domain_name}:{listed_path}")
@@ -143,15 +148,8 @@ def validate_references(root: Path, contract: dict) -> tuple[list[Finding], int]
     boatrace = contract["domains"]["BOATRACE"]
     wanstage = contract["domains"]["WANSTAGE_CONTROL"]
     denied = tuple(normalize_relative(p) for p in boatrace["denied_path_prefixes"])
-    boatrace_roots = tuple(
-        normalize_relative(p)
-        for p in (
-            boatrace["control_root"],
-            "projects/boatrace_research_domain",
-            "governance/imports",
-            "governance/reports",
-            "governance/status",
-        )
+    boatrace_allowed = tuple(
+        normalize_relative(p) for p in boatrace["allowed_path_prefixes"]
     )
     foreign_registry = normalize_relative(wanstage["evidence_registry"])
     foreign_manifest = normalize_relative(wanstage["manifest"])
@@ -163,8 +161,7 @@ def validate_references(root: Path, contract: dict) -> tuple[list[Finding], int]
         text = read_text(path)
         scanned += 1
 
-        is_boatrace_scope = any(is_under_prefix(relative, prefix) for prefix in boatrace_roots)
-        if not is_boatrace_scope:
+        if not any(is_under_prefix(relative, prefix) for prefix in boatrace_allowed):
             continue
 
         for prefix in denied:
