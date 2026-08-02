@@ -1,0 +1,104 @@
+{
+  "contract_id": "BOATRACE_WANSTAGE_CONTROL_SEPARATION",
+  "workspace_root": "/Users/okayoshiyuki/WANSTAGE_NEW",
+  "version_policy": "GIT_COMMIT_AND_FILE_SHA256_ONLY",
+  "separation_layers": [
+    "PATH_NAMESPACE",
+    "MANIFEST_NAMESPACE",
+    "SHA_NAMESPACE",
+    "EXECUTION_AUTHORITY",
+    "EVIDENCE_REGISTRY"
+  ],
+  "domains": {
+    "BOATRACE": {
+      "control_root": "governance/domains/boatrace",
+      "manifest": "governance/domains/boatrace/MANIFEST.sha256",
+      "evidence_registry": "governance/domains/boatrace/evidence_registry.jsonl",
+      "allowed_path_prefixes": [
+        "projects/boatrace_research_domain/",
+        "governance/imports/boatrace_",
+        "governance/domains/boatrace/",
+        "governance/reports/boatrace_",
+        "governance/status/boatrace_"
+      ],
+      "denied_path_prefixes": [
+        "governance/gpt_builder/wanstage_terminal_connection_engineer/",
+        "governance/domains/wanstage_control/",
+        "runtime/watchers/",
+        "finance_ai/"
+      ],
+      "allowed_artifact_types": [
+        "OFFICIAL_RACE_HTML",
+        "RACE_ENTRY",
+        "EXHIBITION",
+        "MOTOR_STATS",
+        "RACE_RESULT",
+        "BOATRACE_VALIDATION_REPORT"
+      ]
+    },
+    "WANSTAGE_CONTROL": {
+      "control_root": "governance/domains/wanstage_control",
+      "manifest": "governance/domains/wanstage_control/MANIFEST.sha256",
+      "evidence_registry": "governance/domains/wanstage_control/evidence_registry.jsonl",
+      "network_terminal_root": "governance/domains/wanstage_control/network_terminal",
+      "terminal_gpt_root": "governance/gpt_builder/wanstage_terminal_connection_engineer",
+      "allowed_artifact_types": [
+        "NETWORK_IDENTITY",
+        "SSH_CONFIGURATION",
+        "FIREWALL_STATE",
+        "FILE_TRANSFER",
+        "TASK_SCHEDULER",
+        "TERMINAL_AUDIT",
+        "DEVICE_CONNECTION"
+      ]
+    }
+  },
+  "sha_identity_fields": [
+    "DOMAIN",
+    "ARTIFACT_PATH",
+    "ARTIFACT_SHA256",
+    "PRODUCER_ID",
+    "GENERATED_AT",
+    "PURPOSE",
+    "SCHEMA_ID"
+  ],
+  "rules": {
+    "boatrace_recursive_scan_from_workspace_root": false,
+    "boatrace_glob_all_json": false,
+    "boatrace_glob_all_sha256": false,
+    "boatrace_glob_all_reports": false,
+    "boatrace_artifact_outside_domain_root_allowed": false,
+    "required_domain_asset_missing_allowed": false,
+    "manifest_cross_domain_entry_allowed": false,
+    "manifest_parent_directory_escape_allowed": false,
+    "manifest_absolute_foreign_path_allowed": false,
+    "cross_domain_sha_reuse_allowed": false,
+    "cross_domain_evidence_entry_allowed": false,
+    "sha_lookup_by_hash_only": false,
+    "sha_copied_from_chat_allowed": false,
+    "sha_copied_from_other_manifest_allowed": false,
+    "implicit_domain_inference_allowed": false,
+    "shared_execution_entrypoint_allowed": false,
+    "shared_evidence_registry_allowed": false
+  },
+  "required_environment": [
+    "WANSTAGE_DOMAIN",
+    "WANSTAGE_CONTROL_ROOT",
+    "WANSTAGE_MANIFEST"
+  ],
+  "failure_reasons": [
+    "BOATRACE_ARTIFACT_OUTSIDE_DOMAIN_ROOT",
+    "REQUIRED_CONTROL_ROOT_MISSING",
+    "REQUIRED_MANIFEST_MISSING",
+    "REQUIRED_EVIDENCE_REGISTRY_MISSING",
+    "CROSS_DOMAIN_CONTROL_REFERENCE",
+    "CROSS_DOMAIN_MANIFEST_ENTRY",
+    "CROSS_DOMAIN_SHA_BINDING",
+    "CROSS_DOMAIN_EVIDENCE_ENTRY",
+    "FOREIGN_SHA_NAMESPACE",
+    "UNSCOPED_RECURSIVE_SCAN",
+    "MANIFEST_PATH_ESCAPE",
+    "SHARED_EXECUTION_ENTRYPOINT",
+    "SHARED_EVIDENCE_REGISTRY"
+  ]
+}
